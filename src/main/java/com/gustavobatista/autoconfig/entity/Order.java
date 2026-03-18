@@ -35,7 +35,7 @@ public class Order {
     private OrderStatus status;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Users userId;
+    private User userId;
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client clientId;
@@ -50,7 +50,7 @@ public class Order {
     public Order() {
     }
 
-    public Order(Long id, LocalDateTime orderDate, Double totalPrice, OrderStatus status, Users userId, Client clientId,
+    public Order(Long id, LocalDateTime orderDate, Double totalPrice, OrderStatus status, User userId, Client clientId,
             Car carId,
 
             List<Accessory> accessories) {
@@ -73,11 +73,11 @@ public class Order {
         return orderDate;
     }
 
-    public Users getUserId() {
+    public User getUserId() {
         return userId;
     }
 
-    public void setUserId(Users userId) {
+    public void setUserId(User userId) {
         this.userId = userId;
     }
 

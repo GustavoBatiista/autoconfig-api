@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
-public class Users {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,10 +34,10 @@ public class Users {
     private Role role;
 
     
-    public Users() {
+    public User() {
     }
 
-    public Users(Long id, String name, String lastName, String nickName, String email, String password, Role role) {
+    public User(Long id, String name, String lastName, String nickName, String email, String password, Role role) {
         this.id = id;
         this.name = name;
         this.lastName = lastName;
@@ -115,7 +115,7 @@ public class Users {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Users other = (Users) obj;
+        User other = (User) obj;
         if (id == null) {
             if (other.id != null)
                 return false;
