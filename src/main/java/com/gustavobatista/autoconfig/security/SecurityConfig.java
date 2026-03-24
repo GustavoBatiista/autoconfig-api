@@ -25,11 +25,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String AUTH_ADMIN = "ROLE_ROLE_ADMIN";
-    private static final String AUTH_MANAGER = "ROLE_ROLE_MANAGER";
-    private static final String AUTH_SELLER = "ROLE_ROLE_SELLER";
-    private static final String AUTH_VEHICLE_STOCK = "ROLE_ROLE_VEHICLE_STOCK";
-    private static final String AUTH_ACCESSORY_STOCK = "ROLE_ROLE_ACCESSORY_STOCK";
+    private static final String AUTH_ADMIN = "ROLE_ADMIN";
+    private static final String AUTH_MANAGER = "ROLE_MANAGER";
+    private static final String AUTH_SELLER = "ROLE_SELLER";
+    private static final String AUTH_VEHICLE_STOCK = "ROLE_VEHICLE_STOCK";
+    private static final String AUTH_ACCESSORY_STOCK = "ROLE_ACCESSORY_STOCK";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
