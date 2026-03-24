@@ -1,5 +1,6 @@
 package com.gustavobatista.autoconfig.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gustavobatista.autoconfig.enums.Role;
 
 import jakarta.persistence.Column;
@@ -19,15 +20,16 @@ public class User extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
-    @Column(name = "nick_name", nullable = false)
+    @Column(name = "nick_name", nullable = false, length = 100)
     private String nickName;
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
-    @Column(name = "password", nullable = false)
+    @JsonIgnore
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)

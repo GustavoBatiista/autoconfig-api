@@ -1,5 +1,6 @@
 package com.gustavobatista.autoconfig.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +31,7 @@ public class Order extends Auditable {
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
     @Column(name = "total_price", nullable = false)
-    private Double totalPrice;
+    private BigDecimal totalPrice;
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
@@ -42,7 +44,7 @@ public class Order extends Auditable {
     @ManyToOne
     @JoinColumn(name = "car_id", nullable = false)
     private Car carId;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "order_accessory", joinColumns = @JoinColumn(name = "order_id"), inverseJoinColumns = @JoinColumn(name = "accessory_id"))
     private List<Accessory> accessories;
 
@@ -50,7 +52,7 @@ public class Order extends Auditable {
     public Order() {
     }
 
-    public Order(Long id, LocalDateTime orderDate, Double totalPrice, OrderStatus status, User userId, Client clientId,
+    public Order(Long id, LocalDateTime orderDate, BigDecimal totalPrice, OrderStatus status, User userId, Client clientId,
             Car carId,
 
             List<Accessory> accessories) {
@@ -85,11 +87,11 @@ public class Order extends Auditable {
         this.orderDate = orderDate;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
 

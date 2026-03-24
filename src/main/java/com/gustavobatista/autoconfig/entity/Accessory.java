@@ -1,11 +1,12 @@
 package com.gustavobatista.autoconfig.entity;
 
-import jakarta.persistence.Id;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -23,7 +24,7 @@ public class Accessory extends Auditable {
     @Column(name = "description", nullable = false)
     private String description;
     @Column(name = "price", nullable = false)
-    private Double price;
+    private BigDecimal price;
     @ManyToOne
     @JoinColumn(name = "car_id", nullable = false)
     private Car carId;
@@ -31,7 +32,7 @@ public class Accessory extends Auditable {
     public Accessory() {
     }
 
-    public Accessory(Long id, String name, String description, Double price, Car carId) {
+    public Accessory(Long id, String name, String description, BigDecimal price, Car carId) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -59,11 +60,11 @@ public class Accessory extends Auditable {
         this.description = description;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
