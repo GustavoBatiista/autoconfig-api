@@ -1,5 +1,6 @@
 package com.gustavobatista.autoconfig.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.gustavobatista.autoconfig.enums.OrderStatus;
@@ -19,11 +20,11 @@ public class OrderRequestDTO {
     private final LocalDateTime orderDate;
     @NotNull(message = "Total price is required")
     @Positive(message = "Total price must be greater than 0")
-    private final Double totalPrice;
+    private final BigDecimal totalPrice;
     @NotNull(message = "Status is required")
     private final OrderStatus status;
 
-    public OrderRequestDTO(Long clientId, Long carId, Long accessoryId, LocalDateTime orderDate, Double totalPrice,
+    public OrderRequestDTO(Long clientId, Long carId, Long accessoryId, LocalDateTime orderDate, BigDecimal totalPrice,
             OrderStatus status) {
         this.clientId = clientId;
         this.carId = carId;
@@ -49,7 +50,7 @@ public class OrderRequestDTO {
         return orderDate;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 

@@ -1,15 +1,17 @@
 package com.gustavobatista.autoconfig.dto;
 
+import java.math.BigDecimal;
+
 public class AccessoryResponseDTO {
 
 
     private final Long id;
     private final String name;
     private final String description;
-    private final Double price;
+    private final BigDecimal price;
     private final CarResponseDTO car;
 
-    public AccessoryResponseDTO(Long id, String name, String description, Double price, CarResponseDTO car) {
+    public AccessoryResponseDTO(Long id, String name, String description, BigDecimal price, CarResponseDTO car) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -29,7 +31,7 @@ public class AccessoryResponseDTO {
         return description;
     }
     
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 

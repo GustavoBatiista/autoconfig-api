@@ -1,5 +1,7 @@
 package com.gustavobatista.autoconfig.dto;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,12 +19,12 @@ public class AccessoryRequestDTO {
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be greater than 0")
-    private final Double price;
+    private final BigDecimal price;
 
     @NotNull(message = "Car id is required")
     private final Long carId;
 
-    public AccessoryRequestDTO(String name, String description, Double price, Long carId) {
+    public AccessoryRequestDTO(String name, String description, BigDecimal price, Long carId) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -37,7 +39,7 @@ public class AccessoryRequestDTO {
         return description;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 

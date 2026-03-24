@@ -1,5 +1,6 @@
 package com.gustavobatista.autoconfig.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,13 +10,13 @@ public class OrderResponseDTO {
 
     private final Long id;
     private final LocalDateTime orderDate;
-    private final Double totalPrice;
+    private final BigDecimal totalPrice;
     private final OrderStatus status;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
     private final List<AccessoryResponseDTO> accessories;
 
-    public OrderResponseDTO(Long id, LocalDateTime orderDate, Double totalPrice, OrderStatus status,
+    public OrderResponseDTO(Long id, LocalDateTime orderDate, BigDecimal totalPrice, OrderStatus status,
             ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories) {
         this.id = id;
         this.orderDate = orderDate;
@@ -34,7 +35,7 @@ public class OrderResponseDTO {
         return orderDate;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
