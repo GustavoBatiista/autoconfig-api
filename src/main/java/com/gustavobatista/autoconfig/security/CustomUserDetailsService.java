@@ -14,8 +14,7 @@ import com.gustavobatista.autoconfig.repository.UserRepository;
 
 /**
  * Carrega o usuário pelo email (subject do JWT) e monta {@link UserDetails} com senha hash e
- * authorities no formato {@code ROLE_<NOME_DO_ENUM>} (ex.: {@code ROLE_ROLE_ADMIN}, {@code ROLE_ROLE_MANAGER}).
- * Alinha com {@code hasAuthority("ROLE_ROLE_ADMIN")} / {@code hasAnyAuthority(...)} no SecurityConfig.
+ * authorities alinhadas ao {@link com.gustavobatista.autoconfig.security.SecurityConfig} (ex.: {@code ROLE_ADMIN}).
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -46,6 +45,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (role == null) {
             throw new IllegalStateException("User has no role assigned");
         }
-        return "ROLE_" + role.name();
+        String name = role.name();
+        return name.startsWith("ROLE_") ? name : "ROLE_" + name;
     }
 }

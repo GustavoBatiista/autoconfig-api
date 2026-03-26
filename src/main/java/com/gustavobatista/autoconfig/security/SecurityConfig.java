@@ -42,9 +42,10 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        
+                        .requestMatchers("/h2-console", "/h2-console/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
