@@ -1,7 +1,9 @@
 package com.gustavobatista.autoconfig.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,10 +19,12 @@ import com.gustavobatista.autoconfig.dto.ClientRequestDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.service.ClientService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/clients")
+@Tag(name = "3 - Clients", description = "Endpoints for client management")
 public class ClientController {
 
     private final ClientService clientService;
@@ -46,8 +50,9 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientResponseDTO>> findAll() {
-        return ResponseEntity.ok(clientService.findAllClients());
+    public ResponseEntity<Page<ClientResponseDTO>> findAll(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(clientService.findAllClients(pageable));
     }
 
     @GetMapping("/{id}")

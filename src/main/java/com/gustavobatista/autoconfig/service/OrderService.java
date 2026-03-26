@@ -1,6 +1,7 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.OrderRequestDTO;
 import com.gustavobatista.autoconfig.dto.OrderResponseDTO;
@@ -13,7 +14,7 @@ public interface OrderService {
 
     public void deleteOrder(Long id);
 
-    public List<OrderResponseDTO> findAllOrders();
+    public Page<OrderResponseDTO> findAllOrders(Pageable pageable);
 
     public OrderResponseDTO findOrderById(Long id);
 }

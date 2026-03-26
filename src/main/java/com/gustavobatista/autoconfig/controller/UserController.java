@@ -1,7 +1,9 @@
 package com.gustavobatista.autoconfig.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,10 +19,12 @@ import com.gustavobatista.autoconfig.dto.UserRequestDTO;
 import com.gustavobatista.autoconfig.dto.UserResponseDTO;
 import com.gustavobatista.autoconfig.service.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/users")
+@Tag(name = "2 - Users", description = "Endpoints for user management")
 public class UserController {
 
     private final UserService userService;
@@ -46,8 +50,9 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<Page<UserResponseDTO>> findAll(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(userService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

@@ -1,6 +1,7 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.ClientRequestDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
@@ -13,7 +14,7 @@ public interface ClientService {
 
     public void deleteClient(Long id);
 
-    public List<ClientResponseDTO> findAllClients();
+    public Page<ClientResponseDTO> findAllClients(Pageable pageable);
 
     public ClientResponseDTO findClientById(Long id);
 }

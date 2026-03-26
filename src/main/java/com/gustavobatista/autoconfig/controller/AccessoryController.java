@@ -1,7 +1,9 @@
 package com.gustavobatista.autoconfig.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,10 +19,12 @@ import com.gustavobatista.autoconfig.dto.AccessoryRequestDTO;
 import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
 import com.gustavobatista.autoconfig.service.AccessoryService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/accessories")
+@Tag(name = "7 - Accessories", description = "Endpoints for accessory management")
 public class AccessoryController {
 
     private final AccessoryService accessoryService;
@@ -46,8 +50,9 @@ public class AccessoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AccessoryResponseDTO>> findAll() {
-        return ResponseEntity.ok(accessoryService.findAllAccessories());
+    public ResponseEntity<Page<AccessoryResponseDTO>> findAll(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(accessoryService.findAllAccessories(pageable));
     }
 
     @GetMapping("/{id}")

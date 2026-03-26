@@ -1,7 +1,5 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.UserRequestDTO;
 import com.gustavobatista.autoconfig.dto.UserResponseDTO;
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('ROLE_ROLE_ADMIN','ROLE_ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
         User actor = getCurrentUserEntityOrThrow();
         if (userRequestDTO.getRole() == Role.ROLE_ADMIN && !RoleChecks.isAdmin(actor.getRole())) {
@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('ROLE_ROLE_ADMIN','ROLE_ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
     public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
         User actor = getCurrentUserEntityOrThrow();
         User user = userRepository.findById(id)
@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('ROLE_ROLE_ADMIN','ROLE_ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
     public void deleteUser(Long id) {
         User actor = getCurrentUserEntityOrThrow();
         User user = userRepository.findById(id)
@@ -104,15 +104,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('ROLE_ROLE_ADMIN','ROLE_ROLE_MANAGER')")
-    public List<UserResponseDTO> findAll() {
-        return userRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
+    public Page<UserResponseDTO> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('ROLE_ROLE_ADMIN','ROLE_ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER')")
     public UserResponseDTO findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found: " + id));

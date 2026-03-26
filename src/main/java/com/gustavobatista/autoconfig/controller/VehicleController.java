@@ -17,10 +17,12 @@ import com.gustavobatista.autoconfig.dto.VehicleEntryRequestDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntryResponseDTO;
 import com.gustavobatista.autoconfig.service.VehicleService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/vehicles")
+@Tag(name = "6 - Vehicles", description = "Endpoints for vehicle management")
 public class VehicleController {
 
     private final VehicleService vehicleService;

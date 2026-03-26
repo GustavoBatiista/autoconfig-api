@@ -21,7 +21,6 @@ import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.entity.Order;
 import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.entity.VehicleEntry;
-import com.gustavobatista.autoconfig.enums.Role;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
 import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;

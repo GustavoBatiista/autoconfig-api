@@ -1,6 +1,7 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.CarRequestDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
@@ -13,7 +14,7 @@ public interface CarService {
 
     public void deleteCar(Long id);
 
-    public List<CarResponseDTO> findAllCars();
+    public Page<CarResponseDTO> findAllCars(Pageable pageable);
 
     public CarResponseDTO findCarById(Long id);
 }

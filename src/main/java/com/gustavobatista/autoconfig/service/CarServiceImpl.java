@@ -1,13 +1,13 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.CarRequestDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
@@ -90,12 +90,10 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CarResponseDTO> findAllCars() {
+    public Page<CarResponseDTO> findAllCars(Pageable pageable) {
         assertAuthenticated();
 
-        return carRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+        return carRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override

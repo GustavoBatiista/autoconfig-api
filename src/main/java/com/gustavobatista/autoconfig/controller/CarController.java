@@ -1,7 +1,9 @@
 package com.gustavobatista.autoconfig.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,11 +19,13 @@ import com.gustavobatista.autoconfig.dto.CarRequestDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.service.CarService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 
 @RestController
 @RequestMapping("/cars")
+@Tag(name = "5 - Cars", description = "Endpoints for car management")
 public class CarController {
 
     private final CarService carService;
@@ -47,8 +51,9 @@ public class CarController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CarResponseDTO>> findAll() {
-        return ResponseEntity.ok(carService.findAllCars());
+    public ResponseEntity<Page<CarResponseDTO>> findAll(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(carService.findAllCars(pageable));
     }
 
     @GetMapping("/{id}")

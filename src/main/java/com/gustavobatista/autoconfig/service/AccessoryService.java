@@ -1,6 +1,7 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.AccessoryRequestDTO;
 import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
@@ -13,7 +14,7 @@ public interface AccessoryService {
 
     public void deleteAccessory(Long id);
 
-    public List<AccessoryResponseDTO> findAllAccessories();
+    public Page<AccessoryResponseDTO> findAllAccessories(Pageable pageable);
 
     public AccessoryResponseDTO findAccessoryById(Long id);
 }

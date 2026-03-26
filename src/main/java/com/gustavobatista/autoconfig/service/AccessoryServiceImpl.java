@@ -1,13 +1,13 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.AccessoryRequestDTO;
 import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
@@ -102,12 +102,10 @@ public class AccessoryServiceImpl implements AccessoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccessoryResponseDTO> findAllAccessories() {
+    public Page<AccessoryResponseDTO> findAllAccessories(Pageable pageable) {
         assertAuthenticated();
 
-        return accessoryRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+        return accessoryRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override

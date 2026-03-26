@@ -1,13 +1,13 @@
 package com.gustavobatista.autoconfig.service;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.gustavobatista.autoconfig.dto.ClientRequestDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
@@ -89,12 +89,10 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClientResponseDTO> findAllClients() {
+    public Page<ClientResponseDTO> findAllClients(Pageable pageable) {
         assertAuthenticated();
 
-        return clientRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+        return clientRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override
