@@ -17,6 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -167,13 +170,11 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("findAll: retorna lista do repositório")
+    @DisplayName("findAll: retorna página do repositório")
     void findAll_happyPath() {
-        when(userRepository.findAll()).thenReturn(List.of(TestFixtures.userAdmin()));
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(TestFixtures.userAdmin())));
 
-        List<UserResponseDTO> all = userService.findAll();
-
-        assertEquals(1, all.size());
+        assertEquals(1, userService.findAll(PageRequest.of(0, 20)).getContent().size());
     }
 
     @Test

@@ -18,6 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.gustavobatista.autoconfig.dto.ClientRequestDTO;
@@ -144,9 +147,10 @@ class ClientServiceImplTest {
     void findAllClients_happyPath() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
-            when(clientRepository.findAll()).thenReturn(List.of(new Client(1L, "John", "Doe", "11999999999")));
+            when(clientRepository.findAll(any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(new Client(1L, "John", "Doe", "11999999999"))));
 
-            assertEquals(1, clientService.findAllClients().size());
+            assertEquals(1, clientService.findAllClients(PageRequest.of(0, 20)).getContent().size());
         }
     }
 }

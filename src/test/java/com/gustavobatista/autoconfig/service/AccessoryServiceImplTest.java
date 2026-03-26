@@ -19,6 +19,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.gustavobatista.autoconfig.dto.AccessoryRequestDTO;
@@ -168,9 +171,10 @@ class AccessoryServiceImplTest {
     void findAllAccessories_happyPath() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
-            when(accessoryRepository.findAll()).thenReturn(List.of(new Accessory(1L, "X", "Y", new BigDecimal("10"), car)));
+            when(accessoryRepository.findAll(any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(new Accessory(1L, "X", "Y", new BigDecimal("10"), car))));
 
-            assertEquals(1, accessoryService.findAllAccessories().size());
+            assertEquals(1, accessoryService.findAllAccessories(PageRequest.of(0, 20)).getContent().size());
         }
     }
 }

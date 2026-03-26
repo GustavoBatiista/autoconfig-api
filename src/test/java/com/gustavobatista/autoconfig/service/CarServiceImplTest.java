@@ -20,6 +20,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.gustavobatista.autoconfig.dto.CarRequestDTO;
@@ -181,11 +184,10 @@ class CarServiceImplTest {
     void findAllCars_happyPath() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
-            when(carRepository.findAll()).thenReturn(List.of(new Car(1L, "Ford", "Focus", "SEL")));
+            when(carRepository.findAll(any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(new Car(1L, "Ford", "Focus", "SEL"))));
 
-            List<CarResponseDTO> all = carService.findAllCars();
-
-            assertEquals(1, all.size());
+            assertEquals(1, carService.findAllCars(PageRequest.of(0, 20)).getContent().size());
         }
     }
 }
