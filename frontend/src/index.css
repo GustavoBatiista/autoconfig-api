@@ -1,0 +1,176 @@
+:root {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1a1a1a;
+  background-color: #f0f2f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #e6e6e6;
+    background-color: #121418;
+  }
+
+  .auth-form input,
+  .btn-secondary {
+    background: #1c1f26;
+    color: #e6e6e6;
+    border-color: #2e3440;
+  }
+
+  .panel {
+    background: #1c1f26;
+    border-color: #2e3440;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+#root > * {
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.auth {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+}
+
+.auth-lead {
+  margin: 0 0 1.5rem;
+  color: #5c6370;
+  font-size: 0.95rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth-lead {
+    color: #9aa3b2;
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e5eb;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth-form {
+    background: #1c1f26;
+    border-color: #2e3440;
+  }
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.auth-form input {
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #cfd4dc;
+  font-size: 1rem;
+}
+
+.auth-form button {
+  margin-top: 0.25rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+}
+
+.auth-form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-secondary {
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cfd4dc;
+  background: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.panel {
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e5eb;
+  text-align: left;
+}
+
+.panel p {
+  margin: 0.35rem 0;
+}
+
+.hint {
+  margin-top: 1rem !important;
+  font-size: 0.9rem;
+  color: #5c6370;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hint {
+    color: #9aa3b2;
+  }
+}
