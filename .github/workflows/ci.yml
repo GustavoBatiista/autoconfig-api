@@ -29,9 +29,6 @@ jobs:
 
       - name: Run tests
         run: mvn -B verify
-        env:
-          SPRING_PROFILES_ACTIVE: dev
-
 
   frontend:
 
