@@ -15,12 +15,10 @@ import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.CarRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
-import com.gustavobatista.autoconfig.security.RoleChecks;
 
 
 
@@ -40,7 +38,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarResponseDTO createCar(CarRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         String brand = trim(dto.getBrand());
         String model = trim(dto.getModel());
@@ -56,7 +54,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarResponseDTO updateCar(Long id, CarRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + id));
@@ -79,7 +77,7 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public void deleteCar(Long id) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + id));
@@ -129,13 +127,6 @@ public class CarServiceImpl implements CarService {
 
     private CarResponseDTO toResponse(Car car) {
         return new CarResponseDTO(car.getId(), car.getBrand(), car.getModel(), car.getVersion());
-    }
-
-    private void assertAdminOrManager() {
-        User current = getCurrentUserOrThrow();
-        if (!RoleChecks.isAdminOrManager(current.getRole())) {
-            throw new ForbiddenOperationException("Admin or manager only");
-        }
     }
 
     private void assertAuthenticated() {

@@ -15,16 +15,14 @@ import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.entity.Accessory;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.User;
-import com.gustavobatista.autoconfig.enums.Role;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.AccessoryRepository;
 import com.gustavobatista.autoconfig.repository.CarRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
-import com.gustavobatista.autoconfig.security.RoleChecks;
+
 
 @Service
 @Transactional
@@ -47,7 +45,7 @@ public class AccessoryServiceImpl implements AccessoryService {
 
     @Override
     public AccessoryResponseDTO createAccessory(AccessoryRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         String name = trim(dto.getName());
         String description = trim(dto.getDescription());
@@ -66,7 +64,7 @@ public class AccessoryServiceImpl implements AccessoryService {
 
     @Override
     public AccessoryResponseDTO updateAccessory(Long id, AccessoryRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Accessory accessory = accessoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ACCESSORY_NOT_FOUND, "Accessory not found: " + id));
@@ -91,7 +89,7 @@ public class AccessoryServiceImpl implements AccessoryService {
 
     @Override
     public void deleteAccessory(Long id) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Accessory accessory = accessoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ACCESSORY_NOT_FOUND, "Accessory not found: " + id));
@@ -151,12 +149,6 @@ public class AccessoryServiceImpl implements AccessoryService {
                 carDto);
     }
 
-    private void assertAdminOrManager() {
-        User current = getCurrentUserOrThrow();
-        if (!RoleChecks.isAdminOrManager(current.getRole())) {
-            throw new ForbiddenOperationException("Admin or manager only");
-        }
-    }
 
     private void assertAuthenticated() {
         getCurrentUserOrThrow();

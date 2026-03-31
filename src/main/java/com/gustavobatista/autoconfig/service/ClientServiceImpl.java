@@ -13,15 +13,12 @@ import com.gustavobatista.autoconfig.dto.ClientRequestDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.entity.User;
-import com.gustavobatista.autoconfig.enums.Role;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.ClientRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
-import com.gustavobatista.autoconfig.security.RoleChecks;
 
 @Service
 @Transactional
@@ -39,7 +36,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ClientResponseDTO createClient(ClientRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         String name = trim(dto.getName());
         String lastName = trim(dto.getLastName());
@@ -55,7 +52,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ClientResponseDTO updateClient(Long id, ClientRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "Client not found: " + id));
@@ -78,7 +75,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void deleteClient(Long id) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "Client not found: " + id));
@@ -131,13 +128,6 @@ public class ClientServiceImpl implements ClientService {
                 client.getName(),
                 client.getLastName(),
                 client.getPhoneNumber());
-    }
-
-    private void assertAdminOrManager() {
-        User current = getCurrentUserOrThrow();
-        if (!RoleChecks.isAdminOrManager(current.getRole())) {
-            throw new ForbiddenOperationException("Admin or manager only");
-        }
     }
 
     private void assertAuthenticated() {

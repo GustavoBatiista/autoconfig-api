@@ -14,7 +14,4 @@ public final class RoleChecks {
         return role == Role.ROLE_ADMIN;
     }
 
-    public static boolean isAdminOrManager(Role role) {
-        return role == Role.ROLE_ADMIN || role == Role.ROLE_MANAGER;
-    }
 }

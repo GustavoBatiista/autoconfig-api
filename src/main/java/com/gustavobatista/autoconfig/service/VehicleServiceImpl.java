@@ -23,13 +23,11 @@ import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.entity.VehicleEntry;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.UserRepository;
 import com.gustavobatista.autoconfig.repository.OrderRepository;
 import com.gustavobatista.autoconfig.repository.VehicleEntryRepository;
-import com.gustavobatista.autoconfig.security.RoleChecks;
 
 @Service
 @Transactional
@@ -52,7 +50,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleEntryResponseDTO createVehicle(VehicleEntryRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         String chassis = trim(dto.getChassis());
         assertUniqueChassis(chassis, null);
@@ -69,7 +67,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleEntryResponseDTO updateVehicle(Long id, VehicleEntryRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         VehicleEntry vehicle = vehicleEntryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VEHICLE_ENTRY_NOT_FOUND, "Vehicle entry not found: " + id));
@@ -93,7 +91,7 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public void deleteVehicle(Long id) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         VehicleEntry vehicle = vehicleEntryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VEHICLE_ENTRY_NOT_FOUND, "Vehicle entry not found: " + id));
@@ -176,13 +174,6 @@ public class VehicleServiceImpl implements VehicleService {
                 accessory.getDescription(),
                 accessory.getPrice(),
                 carDto);
-    }
-
-    private void assertAdminOrManager() {
-        User current = getCurrentUserOrThrow();
-        if (!RoleChecks.isAdminOrManager(current.getRole())) {
-            throw new ForbiddenOperationException("Admin or manager only");
-        }
     }
 
     private void assertAuthenticated() {

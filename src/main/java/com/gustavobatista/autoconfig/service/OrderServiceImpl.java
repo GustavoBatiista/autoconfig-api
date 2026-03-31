@@ -23,7 +23,6 @@ import com.gustavobatista.autoconfig.entity.Order;
 import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.exception.BusinessRuleException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.AccessoryRepository;
@@ -31,7 +30,6 @@ import com.gustavobatista.autoconfig.repository.CarRepository;
 import com.gustavobatista.autoconfig.repository.ClientRepository;
 import com.gustavobatista.autoconfig.repository.OrderRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
-import com.gustavobatista.autoconfig.security.RoleChecks;
 
 @Service
 @Transactional
@@ -60,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponseDTO createOrder(OrderRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         User seller = getCurrentUserOrThrow();
         Client client = clientRepository.findById(dto.getClientId())
@@ -90,7 +88,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponseDTO updateOrder(Long id, OrderRequestDTO dto) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + id));
@@ -119,7 +117,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void deleteOrder(Long id) {
-        assertAdminOrManager();
+        assertAuthenticated();
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + id));
@@ -190,13 +188,6 @@ public class OrderServiceImpl implements OrderService {
                 accessory.getDescription(),
                 accessory.getPrice(),
                 carDto);
-    }
-
-    private void assertAdminOrManager() {
-        User current = getCurrentUserOrThrow();
-        if (!RoleChecks.isAdminOrManager(current.getRole())) {
-            throw new ForbiddenOperationException("Admin or manager only");
-        }
     }
 
     private void assertAuthenticated() {
