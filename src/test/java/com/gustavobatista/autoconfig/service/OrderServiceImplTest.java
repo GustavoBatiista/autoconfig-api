@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +31,6 @@ import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.enums.OrderStatus;
 import com.gustavobatista.autoconfig.exception.BusinessRuleException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.AccessoryRepository;
@@ -145,12 +143,31 @@ class OrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("createOrder: Forbidden quando vendedor tenta criar (não é admin/manager)")
-    void createOrder_sellerForbidden() {
+    @DisplayName("createOrder: persiste quando vendedor autenticado e entidades existem")
+    void createOrder_sellerAllowed() {
+        User sellerUser = TestFixtures.userSeller();
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
-            when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
+            when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(sellerUser));
+            when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+            when(carRepository.findById(2L)).thenReturn(Optional.of(car));
+            when(accessoryRepository.findById(3L)).thenReturn(Optional.of(accessory));
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+                Order o = inv.getArgument(0);
+                return new Order(
+                        100L,
+                        o.getOrderDate(),
+                        o.getTotalPrice(),
+                        o.getStatus(),
+                        o.getUserId(),
+                        o.getClientId(),
+                        o.getCarId(),
+                        o.getAccessories());
+            });
 
-            assertThrows(ForbiddenOperationException.class, () -> orderService.createOrder(validDto));
+            OrderResponseDTO result = orderService.createOrder(validDto);
+
+            assertEquals(100L, result.getId());
+            verify(orderRepository).save(any(Order.class));
         }
     }
 

@@ -28,7 +28,6 @@ import com.gustavobatista.autoconfig.entity.VehicleEntry;
 import com.gustavobatista.autoconfig.enums.VehicleCondition;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.OrderRepository;
@@ -111,12 +110,20 @@ class VehicleServiceImplTest {
     }
 
     @Test
-    @DisplayName("createVehicle: Forbidden quando seller")
-    void createVehicle_sellerForbidden() {
+    @DisplayName("createVehicle: persiste quando seller e pedido existe")
+    void createVehicle_sellerAllowed() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+            when(vehicleEntryRepository.existsByChassisIgnoreCase(CHASSIS_17)).thenReturn(false);
+            when(vehicleEntryRepository.save(any(VehicleEntry.class))).thenAnswer(inv -> {
+                VehicleEntry v = inv.getArgument(0);
+                return new VehicleEntry(200L, v.getChassis(), v.getArrivalDate(), v.getCondition(), v.getOrderId());
+            });
 
-            assertThrows(ForbiddenOperationException.class, () -> vehicleService.createVehicle(validDto));
+            VehicleEntryResponseDTO result = vehicleService.createVehicle(validDto);
+
+            assertEquals(200L, result.getId());
         }
     }
 

@@ -30,7 +30,6 @@ import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.CarRepository;
@@ -92,13 +91,21 @@ class CarServiceImplTest {
     }
 
     @Test
-    @DisplayName("createCar: lança ForbiddenOperationException quando papel não é admin nem manager")
-    void createCar_seller_forbidden() {
+    @DisplayName("createCar: serviço não bloqueia seller; POST /cars é restrito no SecurityConfig")
+    void createCar_seller_notBlockedInService() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
+            when(carRepository.existsByBrandIgnoreCaseAndModelIgnoreCaseAndVersionIgnoreCase("Ford", "Focus", "SEL"))
+                    .thenReturn(false);
+            when(carRepository.save(any(Car.class))).thenAnswer(inv -> {
+                Car c = inv.getArgument(0);
+                return new Car(11L, c.getBrand(), c.getModel(), c.getVersion());
+            });
 
-            assertThrows(ForbiddenOperationException.class, () -> carService.createCar(validDto));
-            verify(carRepository, never()).save(any());
+            CarResponseDTO result = carService.createCar(validDto);
+
+            assertEquals(11L, result.getId());
+            verify(carRepository).save(any(Car.class));
         }
     }
 

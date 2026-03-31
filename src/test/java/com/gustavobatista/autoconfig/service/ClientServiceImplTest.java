@@ -28,7 +28,6 @@ import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.ClientRepository;
@@ -87,12 +86,20 @@ class ClientServiceImplTest {
     }
 
     @Test
-    @DisplayName("createClient: Forbidden quando seller")
-    void createClient_sellerForbidden() {
+    @DisplayName("createClient: persiste quando seller (autorização no filtro HTTP)")
+    void createClient_sellerAllowed() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
+            when(clientRepository.existsByPhoneNumber("11999999999")).thenReturn(false);
+            when(clientRepository.save(any(Client.class))).thenAnswer(inv -> {
+                Client c = inv.getArgument(0);
+                return new Client(21L, c.getName(), c.getLastName(), c.getPhoneNumber());
+            });
 
-            assertThrows(ForbiddenOperationException.class, () -> clientService.createClient(validDto));
+            ClientResponseDTO result = clientService.createClient(validDto);
+
+            assertEquals(21L, result.getId());
+            verify(clientRepository).save(any(Client.class));
         }
     }
 

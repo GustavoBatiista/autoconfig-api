@@ -30,7 +30,6 @@ import com.gustavobatista.autoconfig.entity.Accessory;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
-import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.AccessoryRepository;
@@ -110,12 +109,21 @@ class AccessoryServiceImplTest {
     }
 
     @Test
-    @DisplayName("createAccessory: Forbidden quando seller")
-    void createAccessory_sellerForbidden() {
+    @DisplayName("createAccessory: persiste quando seller e carro existe")
+    void createAccessory_sellerAllowed() {
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.SELLER_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.SELLER_EMAIL)).thenReturn(Optional.of(TestFixtures.userSeller()));
+            when(carRepository.findById(1L)).thenReturn(Optional.of(car));
+            when(accessoryRepository.existsByNameIgnoreCaseAndCarId_Id("Roof Rack", 1L)).thenReturn(false);
+            when(accessoryRepository.save(any(Accessory.class))).thenAnswer(inv -> {
+                Accessory a = inv.getArgument(0);
+                return new Accessory(50L, a.getName(), a.getDescription(), a.getPrice(), car);
+            });
 
-            assertThrows(ForbiddenOperationException.class, () -> accessoryService.createAccessory(validDto));
+            AccessoryResponseDTO result = accessoryService.createAccessory(validDto);
+
+            assertEquals(50L, result.getId());
+            verify(accessoryRepository).save(any(Accessory.class));
         }
     }
 
