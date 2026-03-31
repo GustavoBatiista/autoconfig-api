@@ -13,10 +13,7 @@ import com.gustavobatista.autoconfig.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Cria um utilizador {@link Role#ROLE_ADMIN} local quando o perfil {@code dev} está ativo e o email
- * ainda não existe. Apenas para desenvolvimento (ex.: H2).
- */
+
 @Component
 @Profile("dev")
 @RequiredArgsConstructor
