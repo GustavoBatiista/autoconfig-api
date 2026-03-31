@@ -33,6 +33,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleNotFound(ResourceNotFoundException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         pd.setTitle("Resource not found");
         pd.setProperty(PROPERTY_CODE, ex.getErrorCode().name());
@@ -41,6 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ProblemDetail> handleConflict(ConflictException ex) {
+        log.warn("Conflict: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         pd.setTitle("Conflict");
         pd.setProperty(PROPERTY_CODE, ex.getErrorCode().name());
@@ -49,6 +51,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ProblemDetail> handleBusinessRule(BusinessRuleException ex) {
+        log.warn("Business rule: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         pd.setTitle("Business rule violation");
         pd.setProperty(PROPERTY_CODE, ex.getErrorCode().name());
@@ -57,6 +60,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<ProblemDetail> handleForbiddenOp(ForbiddenOperationException ex) {
+        log.warn("Forbidden operation: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
         pd.setTitle("Forbidden");
         pd.setProperty(PROPERTY_CODE, ex.getErrorCode().name());
@@ -65,6 +69,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ProblemDetail> handleUnauthorizedApp(UnauthorizedException ex) {
+        log.warn("Unauthorized: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
         pd.setTitle("Unauthorized");
         pd.setProperty(PROPERTY_CODE, ex.getErrorCode().name());
@@ -73,6 +78,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ProblemDetail> handleAuthentication(AuthenticationException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
         pd.setTitle("Unauthorized");
         pd.setProperty(PROPERTY_CODE, ErrorCode.UNAUTHORIZED.name());
@@ -81,6 +87,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
         pd.setTitle("Forbidden");
         pd.setProperty(PROPERTY_CODE, ErrorCode.FORBIDDEN.name());
@@ -96,6 +103,8 @@ public class GlobalExceptionHandler {
                         (a, b) -> a + "; " + b,
                         HashMap::new));
 
+        log.warn("Validation error: {}", fieldErrors);
+
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setTitle("Validation error");
         pd.setProperty(PROPERTY_CODE, ErrorCode.VALIDATION_ERROR.name());
@@ -110,6 +119,7 @@ public class GlobalExceptionHandler {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         String detail = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+        log.warn("ResponseStatus {}: {}", status.value(), detail);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
         pd.setTitle(status.getReasonPhrase());
         pd.setProperty(PROPERTY_CODE, "HTTP_" + status.value());
@@ -125,9 +135,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(pd);
     }
 
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ProblemDetail> handleRuntime(RuntimeException ex) {
+        log.error("Runtime error: {}", ex.getMessage(), ex);
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred");
+        pd.setTitle("Internal error");
+        pd.setProperty(PROPERTY_CODE, ErrorCode.INTERNAL_ERROR.name());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(pd);
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGeneric(Exception ex) {
-        log.error("Unexpected error", ex);
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred");
