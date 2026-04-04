@@ -25,106 +25,122 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String AUTH_ADMIN = "ROLE_ADMIN";
-    private static final String AUTH_MANAGER = "ROLE_MANAGER";
-    private static final String AUTH_SELLER = "ROLE_SELLER";
-    private static final String AUTH_VEHICLE_STOCK = "ROLE_VEHICLE_STOCK";
-    private static final String AUTH_ACCESSORY_STOCK = "ROLE_ACCESSORY_STOCK";
+        private static final String AUTH_ADMIN = "ROLE_ADMIN";
+        private static final String AUTH_MANAGER = "ROLE_MANAGER";
+        private static final String AUTH_SELLER = "ROLE_SELLER";
+        private static final String AUTH_VEHICLE_STOCK = "ROLE_VEHICLE_STOCK";
+        private static final String AUTH_ACCESSORY_STOCK = "ROLE_ACCESSORY_STOCK";
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+                this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console", "/h2-console/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html")
-                                .permitAll()
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+                                .cors(Customizer.withDefaults())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/h2-console", "/h2-console/**").permitAll()
+                                                .requestMatchers("/auth/**").permitAll()
+                                                .requestMatchers(
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
 
-                        // ---- USERS: ADMIN + MANAGER (restrições finas em UserServiceImpl)
-                        .requestMatchers("/users", "/users/**").hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
+                                                // ---- USERS: ADMIN + MANAGER (restrições finas em UserServiceImpl)
+                                                .requestMatchers("/users", "/users/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
 
-                        // ---- CARS: seller só GET; ADMIN/MANAGER escrita
-                        .requestMatchers(HttpMethod.GET, "/cars", "/cars/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER, AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
-                        .requestMatchers(HttpMethod.POST, "/cars", "/cars/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
-                        .requestMatchers(HttpMethod.PUT, "/cars", "/cars/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
-                        .requestMatchers(HttpMethod.DELETE, "/cars", "/cars/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
+                                                // ---- CARS: seller só GET; ADMIN/MANAGER escrita
+                                                .requestMatchers(HttpMethod.GET, "/cars", "/cars/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER,
+                                                                AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
+                                                .requestMatchers(HttpMethod.POST, "/cars", "/cars/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
+                                                .requestMatchers(HttpMethod.PUT, "/cars", "/cars/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
+                                                .requestMatchers(HttpMethod.DELETE, "/cars", "/cars/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER)
 
-                        // ---- CLIENTS: ADMIN + MANAGER + SELLER
-                        .requestMatchers("/clients", "/clients/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
+                                                // ---- CLIENTS: ADMIN + MANAGER + SELLER
+                                                .requestMatchers("/clients", "/clients/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
 
-                        // ---- ORDERS
-                        .requestMatchers(HttpMethod.GET, "/orders", "/orders/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER, AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
-                        .requestMatchers(HttpMethod.POST, "/orders", "/orders/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
-                        .requestMatchers(HttpMethod.PUT, "/orders", "/orders/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
-                        .requestMatchers(HttpMethod.DELETE, "/orders", "/orders/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
+                                                // ---- ORDERS
+                                                .requestMatchers(HttpMethod.GET, "/orders", "/orders/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER,
+                                                                AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
+                                                .requestMatchers(HttpMethod.POST, "/orders", "/orders/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
+                                                .requestMatchers(HttpMethod.PUT, "/orders", "/orders/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
+                                                .requestMatchers(HttpMethod.DELETE, "/orders", "/orders/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
 
-                        // ---- VEHICLES
-                        .requestMatchers(HttpMethod.GET, "/vehicles", "/vehicles/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER, AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
-                        .requestMatchers(HttpMethod.POST, "/vehicles", "/vehicles/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
-                        .requestMatchers(HttpMethod.PUT, "/vehicles", "/vehicles/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
-                        .requestMatchers(HttpMethod.DELETE, "/vehicles", "/vehicles/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
+                                                // ---- VEHICLES
+                                                .requestMatchers(HttpMethod.GET, "/vehicles", "/vehicles/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER,
+                                                                AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
+                                                .requestMatchers(HttpMethod.POST, "/vehicles", "/vehicles/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
+                                                .requestMatchers(HttpMethod.PUT, "/vehicles", "/vehicles/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
+                                                .requestMatchers(HttpMethod.DELETE, "/vehicles", "/vehicles/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK)
 
-                        // ---- ACCESSORIES: GET inclui seller; escrita ADMIN/MANAGER + accessory_stock
-                        .requestMatchers(HttpMethod.GET, "/accessories", "/accessories/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER, AUTH_ACCESSORY_STOCK)
-                        .requestMatchers("/accessories", "/accessories/**")
-                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_ACCESSORY_STOCK)
+                                                // ---- ACCESSORIES: GET inclui seller; escrita ADMIN/MANAGER +
+                                                // accessory_stock
+                                                .requestMatchers(HttpMethod.GET, "/accessories", "/accessories/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER,
+                                                                AUTH_ACCESSORY_STOCK)
+                                                .requestMatchers("/accessories", "/accessories/**")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_ACCESSORY_STOCK)
 
-                        // fallback: qualquer outra rota da API exige autenticação
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                                                // fallback: qualquer outra rota da API exige autenticação
+                                                .anyRequest().authenticated())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+                CorsConfiguration configuration = new CorsConfiguration();
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                configuration.setAllowedOriginPatterns(List.of(
+                                "http://localhost:3000",
+                                "https://striking-upliftment-production-2300.up.railway.app",
+                                "https://autoconfig-api-production.up.railway.app"));
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
+                configuration.setAllowedMethods(List.of(
+                                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+                configuration.setAllowedHeaders(List.of("*"));
+
+                configuration.setAllowCredentials(true);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+
+                return source;
+        }
+
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+                return configuration.getAuthenticationManager();
+        }
 }
