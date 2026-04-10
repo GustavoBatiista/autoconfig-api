@@ -117,6 +117,7 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOriginPatterns(List.of(
+                                "http://localhost:5173",
                                 "http://localhost:3000",
                                 "https://striking-upliftment-production-2300.up.railway.app",
                                 "https://autoconfig-api-production.up.railway.app"));
