@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchMe, logout, type MeResponse } from '../api/authApi'
-import { getStoredToken } from '../api/client'
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -9,11 +8,6 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!getStoredToken()) {
-      navigate('/login', { replace: true })
-      return
-    }
-
     let cancelled = false
     void (async () => {
       try {
