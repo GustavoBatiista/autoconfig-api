@@ -1,25 +1,12 @@
 import { getApiBaseUrl } from '../config'
-
-const TOKEN_KEY = 'autoconfig_token'
-
-export function getStoredToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY)
-}
-
-export function setStoredToken(token: string | null): void {
-  if (token) {
-    sessionStorage.setItem(TOKEN_KEY, token)
-  } else {
-    sessionStorage.removeItem(TOKEN_KEY)
-  }
-}
+import { getAccessToken } from './tokenStorage'
 
 /**
- * Chamada à API com JSON opcional e header Authorization quando há token guardado.
+ * Cliente HTTP da API: base URL, JSON e Authorization quando há token.
  */
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const base = getApiBaseUrl()
-  const token = getStoredToken()
+  const token = getAccessToken()
   const headers = new Headers(init?.headers)
 
   if (init?.body != null && !headers.has('Content-Type')) {

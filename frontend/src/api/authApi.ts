@@ -1,4 +1,5 @@
-import { apiFetch, setStoredToken } from './client'
+import { apiFetch } from './apiClient'
+import { setAccessToken } from './tokenStorage'
 
 export type AuthResponse = {
   token: string
@@ -38,7 +39,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
   }
 
   const data = (await res.json()) as AuthResponse
-  setStoredToken(data.token)
+  setAccessToken(data.token)
   return data
 }
 
@@ -51,5 +52,5 @@ export async function fetchMe(): Promise<MeResponse> {
 }
 
 export function logout(): void {
-  setStoredToken(null)
+  setAccessToken(null)
 }
