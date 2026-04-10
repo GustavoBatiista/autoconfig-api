@@ -70,7 +70,9 @@ export function UsersPage() {
           }
         }
       } catch {
-
+        if (!cancelled) {
+          setMe(null)
+        }
       }
     })()
     return () => {
