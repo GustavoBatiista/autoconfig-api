@@ -1,7 +1,13 @@
 package com.gustavobatista.autoconfig.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,20 +72,19 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "Client not found: " + dto.getClientId()));
         Car car = carRepository.findById(dto.getCarId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + dto.getCarId()));
-        Accessory accessory = accessoryRepository.findById(dto.getAccessoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ACCESSORY_NOT_FOUND, "Accessory not found: " + dto.getAccessoryId()));
 
-        assertAccessoryBelongsToCar(accessory, car);
+        List<Accessory> accessories = loadAccessoriesForCar(dto.getAccessoryIds(), car);
+        BigDecimal totalPrice = sumAccessoryPrices(accessories);
 
         Order order = new Order(
                 null,
                 LocalDateTime.now(),
-                dto.getTotalPrice(),
+                totalPrice,
                 dto.getStatus(),
                 seller,
                 client,
                 car,
-                List.of(accessory));
+                accessories);
 
         Order saved = orderRepository.save(order);
         log.info("Order created: id={}", saved.getId());
@@ -98,16 +103,15 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "Client not found: " + dto.getClientId()));
         Car car = carRepository.findById(dto.getCarId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + dto.getCarId()));
-        Accessory accessory = accessoryRepository.findById(dto.getAccessoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ACCESSORY_NOT_FOUND, "Accessory not found: " + dto.getAccessoryId()));
 
-        assertAccessoryBelongsToCar(accessory, car);
+        List<Accessory> accessories = loadAccessoriesForCar(dto.getAccessoryIds(), car);
+        BigDecimal totalPrice = sumAccessoryPrices(accessories);
 
-        order.setTotalPrice(dto.getTotalPrice());
+        order.setTotalPrice(totalPrice);
         order.setStatus(dto.getStatus());
         order.setClientId(client);
         order.setCarId(car);
-        order.setAccessories(List.of(accessory));
+        order.setAccessories(accessories);
 
         Order saved = orderRepository.save(order);
         log.info("Order updated: id={}", saved.getId());
@@ -143,6 +147,38 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + id));
 
         return toResponse(order);
+    }
+
+    /**
+     * Loads accessories by id (deduplicated, order preserved), ensures all exist and belong to {@code car}.
+     */
+    private List<Accessory> loadAccessoriesForCar(List<Long> requestedIds, Car car) {
+        List<Long> distinctOrdered = new ArrayList<>(new LinkedHashSet<>(requestedIds));
+
+        List<Accessory> loaded = accessoryRepository.findAllById(distinctOrdered);
+        if (loaded.size() != distinctOrdered.size()) {
+            Set<Long> foundIds = loaded.stream().map(Accessory::getId).collect(Collectors.toSet());
+            for (Long accessoryId : distinctOrdered) {
+                if (!foundIds.contains(accessoryId)) {
+                    throw new ResourceNotFoundException(ErrorCode.ACCESSORY_NOT_FOUND, "Accessory not found: " + accessoryId);
+                }
+            }
+        }
+
+        Map<Long, Accessory> byId = loaded.stream().collect(Collectors.toMap(Accessory::getId, a -> a));
+        List<Accessory> ordered = new ArrayList<>();
+        for (Long accessoryId : distinctOrdered) {
+            Accessory accessory = byId.get(accessoryId);
+            assertAccessoryBelongsToCar(accessory, car);
+            ordered.add(accessory);
+        }
+        return ordered;
+    }
+
+    private static BigDecimal sumAccessoryPrices(List<Accessory> accessories) {
+        return accessories.stream()
+                .map(Accessory::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private static void assertAccessoryBelongsToCar(Accessory accessory, Car car) {
