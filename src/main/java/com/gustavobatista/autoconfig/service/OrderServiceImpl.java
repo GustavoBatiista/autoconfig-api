@@ -1,5 +1,6 @@
 package com.gustavobatista.autoconfig.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -72,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order(
                 null,
-                dto.getOrderDate(),
+                LocalDateTime.now(),
                 dto.getTotalPrice(),
                 dto.getStatus(),
                 seller,
@@ -102,7 +103,6 @@ public class OrderServiceImpl implements OrderService {
 
         assertAccessoryBelongsToCar(accessory, car);
 
-        order.setOrderDate(dto.getOrderDate());
         order.setTotalPrice(dto.getTotalPrice());
         order.setStatus(dto.getStatus());
         order.setClientId(client);
@@ -158,6 +158,7 @@ public class OrderServiceImpl implements OrderService {
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
+                order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
                 toClientResponse(order.getClientId()),

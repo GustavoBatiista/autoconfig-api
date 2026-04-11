@@ -148,6 +148,7 @@ public class VehicleServiceImpl implements VehicleService {
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
+                order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
                 toClientResponse(order.getClientId()),
