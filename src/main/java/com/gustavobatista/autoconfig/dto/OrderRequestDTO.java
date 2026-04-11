@@ -1,11 +1,11 @@
 package com.gustavobatista.autoconfig.dto;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 import com.gustavobatista.autoconfig.enums.OrderStatus;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 public class OrderRequestDTO {
 
@@ -13,19 +13,15 @@ public class OrderRequestDTO {
     private final Long clientId;
     @NotNull(message = "Car id is required")
     private final Long carId;
-    @NotNull(message = "Accessory id is required")
-    private final Long accessoryId;
-    @NotNull(message = "Total price is required")
-    @Positive(message = "Total price must be greater than 0")
-    private final BigDecimal totalPrice;
+    @NotEmpty(message = "At least one accessory is required")
+    private final List<Long> accessoryIds;
     @NotNull(message = "Status is required")
     private final OrderStatus status;
 
-    public OrderRequestDTO(Long clientId, Long carId, Long accessoryId, BigDecimal totalPrice, OrderStatus status) {
+    public OrderRequestDTO(Long clientId, Long carId, List<Long> accessoryIds, OrderStatus status) {
         this.clientId = clientId;
         this.carId = carId;
-        this.accessoryId = accessoryId;
-        this.totalPrice = totalPrice;
+        this.accessoryIds = accessoryIds == null ? List.of() : List.copyOf(accessoryIds);
         this.status = status;
     }
 
@@ -37,12 +33,8 @@ public class OrderRequestDTO {
         return carId;
     }
 
-    public Long getAccessoryId() {
-        return accessoryId;
-    }
-
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
+    public List<Long> getAccessoryIds() {
+        return accessoryIds;
     }
 
     public OrderStatus getStatus() {
