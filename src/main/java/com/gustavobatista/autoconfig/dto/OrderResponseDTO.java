@@ -10,16 +10,20 @@ public class OrderResponseDTO {
 
     private final Long id;
     private final LocalDateTime orderDate;
+    /** Persisted creation timestamp from {@link com.gustavobatista.autoconfig.entity.Auditable}. */
+    private final LocalDateTime createdAt;
     private final BigDecimal totalPrice;
     private final OrderStatus status;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
     private final List<AccessoryResponseDTO> accessories;
 
-    public OrderResponseDTO(Long id, LocalDateTime orderDate, BigDecimal totalPrice, OrderStatus status,
+    public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, BigDecimal totalPrice,
+            OrderStatus status,
             ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories) {
         this.id = id;
         this.orderDate = orderDate;
+        this.createdAt = createdAt;
         this.totalPrice = totalPrice;
         this.status = status;
         this.client = client;
@@ -33,6 +37,10 @@ public class OrderResponseDTO {
 
     public LocalDateTime getOrderDate() {
         return orderDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public BigDecimal getTotalPrice() {
