@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -74,8 +73,7 @@ class OrderServiceImplTest {
         client = TestFixtures.client(1L);
         car = TestFixtures.car(2L);
         accessory = new Accessory(3L, "Rack", "Roof", new BigDecimal("50.00"), car);
-        LocalDateTime orderDate = LocalDateTime.of(2025, 6, 1, 10, 0);
-        validDto = new OrderRequestDTO(1L, 2L, 3L, orderDate, new BigDecimal("250.00"), OrderStatus.WAITING_FOR_VEHICLE);
+        validDto = new OrderRequestDTO(1L, 2L, 3L, new BigDecimal("250.00"), OrderStatus.WAITING_FOR_VEHICLE);
     }
 
     @Test
@@ -131,11 +129,7 @@ class OrderServiceImplTest {
             when(carRepository.findById(99L)).thenReturn(Optional.of(otherCar));
             when(accessoryRepository.findById(3L)).thenReturn(Optional.of(accessory));
 
-            OrderRequestDTO dto = new OrderRequestDTO(
-                    1L, 99L, 3L,
-                    LocalDateTime.now(),
-                    new BigDecimal("100.00"),
-                    OrderStatus.WAITING_FOR_VEHICLE);
+            OrderRequestDTO dto = new OrderRequestDTO(1L, 99L, 3L, new BigDecimal("100.00"), OrderStatus.WAITING_FOR_VEHICLE);
 
             BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> orderService.createOrder(dto));
             assertEquals(ErrorCode.ORDER_ACCESSORY_CAR_MISMATCH, ex.getErrorCode());
