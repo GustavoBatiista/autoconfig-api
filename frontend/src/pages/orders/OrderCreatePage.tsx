@@ -6,6 +6,8 @@ import { fetchClientsPage, type ClientResponse } from '../../api/clientsApi'
 import { createOrder } from '../../api/ordersApi'
 import { ORDER_STATUS_FORM_OPTIONS } from '../../domain/orderStatus'
 
+const moneyBr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+
 function carLabel(c: CarResponse): string {
   const v = c.version?.trim()
   return `${c.brand} ${c.model} ${v}`.trim()
@@ -25,8 +27,7 @@ export function OrderCreatePage() {
 
   const [clientId, setClientId] = useState<number | ''>('')
   const [carId, setCarId] = useState<number | ''>('')
-  const [accessoryId, setAccessoryId] = useState<number | ''>('')
-  const [totalPrice, setTotalPrice] = useState('')
+  const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<Set<number>>(new Set())
   const [status, setStatus] = useState<string>(ORDER_STATUS_FORM_OPTIONS[0].value)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -65,14 +66,32 @@ export function OrderCreatePage() {
   }, [accessories, carId])
 
   useEffect(() => {
-    if (carId === '') return
-    const list = accessories.filter((a) => a.car.id === carId)
-    setAccessoryId((prev) => {
-      if (list.length === 0) return ''
-      if (prev !== '' && list.some((a) => a.id === prev)) return prev
-      return list[0].id
+    const allowed = new Set(accessoriesForCar.map((a) => a.id))
+    setSelectedAccessoryIds((prev) => {
+      const next = new Set<number>()
+      for (const id of prev) {
+        if (allowed.has(id)) next.add(id)
+      }
+      return next
     })
-  }, [carId, accessories])
+  }, [carId, accessoriesForCar])
+
+  const computedTotal = useMemo(() => {
+    let sum = 0
+    for (const a of accessoriesForCar) {
+      if (selectedAccessoryIds.has(a.id)) sum += a.price
+    }
+    return sum
+  }, [accessoriesForCar, selectedAccessoryIds])
+
+  function toggleAccessory(id: number) {
+    setSelectedAccessoryIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   function goBack() {
     navigate('..')
@@ -81,13 +100,12 @@ export function OrderCreatePage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (clientId === '' || carId === '' || accessoryId === '') {
-      setError('Selecione cliente, carro e acessorio compativel.')
+    if (clientId === '' || carId === '') {
+      setError('Selecione cliente e carro.')
       return
     }
-    const price = Number.parseFloat(totalPrice.replace(',', '.'))
-    if (Number.isNaN(price) || price <= 0) {
-      setError('Preco total invalido.')
+    if (selectedAccessoryIds.size === 0) {
+      setError('Selecione pelo menos um acessorio do carro.')
       return
     }
 
@@ -96,8 +114,7 @@ export function OrderCreatePage() {
       await createOrder({
         clientId,
         carId,
-        accessoryId,
-        totalPrice: price,
+        accessoryIds: [...selectedAccessoryIds],
         status,
       })
       navigate('..')
@@ -120,7 +137,8 @@ export function OrderCreatePage() {
       <h2 className="dash-page__heading">Novo pedido</h2>
 
       <p className="dash-hint">
-        A data do pedido e o registro de criação são definidos automaticamente no servidor (auditoria).
+        A data do pedido e o registro de criação são definidos automaticamente no servidor. O preço total do pedido é a
+        soma dos acessórios selecionados (calculada no servidor a partir dos valores cadastrados).
       </p>
 
       {listsError ? <p className="dash-error">{listsError}</p> : null}
@@ -167,36 +185,8 @@ export function OrderCreatePage() {
             </select>
           </label>
           <label>
-            Acessorio (do carro selecionado)
-            <select
-              value={accessoryId === '' ? '' : String(accessoryId)}
-              onChange={(e) => setAccessoryId(e.target.value ? Number(e.target.value) : '')}
-              required
-              disabled={listsLoading || accessoriesForCar.length === 0}
-            >
-              {accessoriesForCar.length === 0 ? (
-                <option value="">
-                  {carId === '' ? 'Selecione um carro' : 'Nenhum acessorio para este carro'}
-                </option>
-              ) : (
-                accessoriesForCar.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    #{a.id} {a.name} —{' '}
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(a.price)}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-          <label>
-            Preco total
-            <input
-              type="text"
-              value={totalPrice}
-              onChange={(e) => setTotalPrice(e.target.value)}
-              required
-              placeholder="0.00"
-            />
+            Preco total (soma dos acessórios)
+            <input type="text" readOnly value={moneyBr.format(computedTotal)} className="dash-input-readonly" />
           </label>
           <label>
             Status
@@ -209,6 +199,36 @@ export function OrderCreatePage() {
             </select>
           </label>
         </div>
+
+        <fieldset className="dash-checkboxes-fieldset">
+          <legend className="dash-checkboxes-legend">Acessórios do carro selecionado</legend>
+          {listsLoading || carId === '' ? (
+            <p className="dash-muted">Carregando...</p>
+          ) : accessoriesForCar.length === 0 ? (
+            <p className="dash-muted">Nenhum acessório cadastrado para este carro.</p>
+          ) : (
+            <ul className="dash-checkboxes-list">
+              {accessoriesForCar.map((a) => (
+                <li key={a.id}>
+                  <label className="dash-checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedAccessoryIds.has(a.id)}
+                      onChange={() => toggleAccessory(a.id)}
+                    />
+                    <span>
+                      <span className="dash-checkbox-row__title">
+                        #{a.id} {a.name}
+                      </span>
+                      <span className="dash-checkbox-row__meta">{moneyBr.format(a.price)}</span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </fieldset>
+
         <div className="dash-form-actions">
           <button type="submit" className="dash-btn-primary" disabled={saving || !canSubmit}>
             {saving ? 'Salvando...' : 'Salvar'}
