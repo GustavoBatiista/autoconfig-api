@@ -6,11 +6,6 @@ import { fetchClientsPage, type ClientResponse } from '../../api/clientsApi'
 import { createOrder } from '../../api/ordersApi'
 import { ORDER_STATUS_FORM_OPTIONS } from '../../domain/orderStatus'
 
-function toDatetimeLocalValue(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 function carLabel(c: CarResponse): string {
   const v = c.version?.trim()
   return `${c.brand} ${c.model} ${v}`.trim()
@@ -31,7 +26,6 @@ export function OrderCreatePage() {
   const [clientId, setClientId] = useState<number | ''>('')
   const [carId, setCarId] = useState<number | ''>('')
   const [accessoryId, setAccessoryId] = useState<number | ''>('')
-  const [orderDate, setOrderDate] = useState(() => toDatetimeLocalValue(new Date()))
   const [totalPrice, setTotalPrice] = useState('')
   const [status, setStatus] = useState<string>(ORDER_STATUS_FORM_OPTIONS[0].value)
   const [error, setError] = useState<string | null>(null)
@@ -96,12 +90,6 @@ export function OrderCreatePage() {
       setError('Preco total invalido.')
       return
     }
-    if (!orderDate) {
-      setError('Informe a data do pedido.')
-      return
-    }
-    let iso = orderDate
-    if (orderDate.length === 16) iso = `${orderDate}:00`
 
     setSaving(true)
     try {
@@ -109,7 +97,6 @@ export function OrderCreatePage() {
         clientId,
         carId,
         accessoryId,
-        orderDate: iso,
         totalPrice: price,
         status,
       })
@@ -131,6 +118,10 @@ export function OrderCreatePage() {
   return (
     <div>
       <h2 className="dash-page__heading">Novo pedido</h2>
+
+      <p className="dash-hint">
+        A data do pedido e o registro de criação são definidos automaticamente no servidor (auditoria).
+      </p>
 
       {listsError ? <p className="dash-error">{listsError}</p> : null}
       {error ? <p className="dash-error">{error}</p> : null}
@@ -196,15 +187,6 @@ export function OrderCreatePage() {
                 ))
               )}
             </select>
-          </label>
-          <label>
-            Data e hora do pedido
-            <input
-              type="datetime-local"
-              value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
-              required
-            />
           </label>
           <label>
             Preco total
