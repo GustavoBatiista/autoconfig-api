@@ -10,10 +10,17 @@ import {
 
 const STATS_PAGE_SIZE = 500
 
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+function formatCreatedAt(iso: string | null | undefined, fallbackIso: string): string {
+  const raw = iso ?? fallbackIso
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return raw
+  return d.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function vehicleLabel(car: OrderResponse['car']): string {
@@ -111,45 +118,36 @@ export function OrdersPage() {
         agregação no backend seria o próximo passo.
       </p>
 
-      <div className="dash-table-wrap">
-        <table className="dash-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Cliente</th>
-              <th>Veículo</th>
-              <th>Status</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="dash-table__empty">
-                  Carregando...
-                </td>
-              </tr>
-            ) : orders.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="dash-table__empty">
-                  Nenhum pedido encontrado.
-                </td>
-              </tr>
-            ) : (
-              orders.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{clientLabel(o.client)}</td>
-                  <td>{vehicleLabel(o.car)}</td>
-                  <td>
-                    <span className={orderStatusBadgeClass(o.status)}>{orderStatusShortLabelPt(o.status)}</span>
-                  </td>
-                  <td>{formatDate(o.orderDate)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="dash-order-cards" role="list" aria-label="Lista de pedidos">
+        {loading ? (
+          <div className="dash-order-cards__empty">Carregando...</div>
+        ) : orders.length === 0 ? (
+          <div className="dash-order-cards__empty">Nenhum pedido encontrado.</div>
+        ) : (
+          orders.map((o) => (
+            <article key={o.id} className="dash-order-card" role="listitem">
+              <div className="dash-order-card__id">Pedido #{o.id}</div>
+              <div className="dash-order-card__row">
+                <span className="dash-order-card__label">Cliente</span>
+                <span className="dash-order-card__value">{clientLabel(o.client)}</span>
+              </div>
+              <div className="dash-order-card__row">
+                <span className="dash-order-card__label">Veículo</span>
+                <span className="dash-order-card__value">{vehicleLabel(o.car)}</span>
+              </div>
+              <div className="dash-order-card__row dash-order-card__row--status">
+                <span className="dash-order-card__label">Status</span>
+                <span className={orderStatusBadgeClass(o.status)}>{orderStatusShortLabelPt(o.status)}</span>
+              </div>
+              <div className="dash-order-card__row">
+                <span className="dash-order-card__label">Criado em</span>
+                <time className="dash-order-card__value" dateTime={o.createdAt ?? o.orderDate}>
+                  {formatCreatedAt(o.createdAt, o.orderDate)}
+                </time>
+              </div>
+            </article>
+          ))
+        )}
       </div>
     </div>
   )

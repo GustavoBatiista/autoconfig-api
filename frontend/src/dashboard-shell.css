@@ -342,3 +342,67 @@
 .dash-btn-secondary:hover {
   background: rgba(148, 163, 184, 0.12);
 }
+
+/* Orders list — flexbox card grid */
+.dash-order-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.dash-order-cards__empty {
+  flex: 1 1 100%;
+  padding: 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+}
+
+.dash-order-card {
+  flex: 1 1 260px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.15rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.dash-order-card__id {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-order-card__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dash-order-card__row--status {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dash-order-card__label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dash-order-card__value {
+  font-size: 0.95rem;
+  color: #f1f5f9;
+  line-height: 1.35;
+}
