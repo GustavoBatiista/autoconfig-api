@@ -16,6 +16,14 @@ export type CarDto = {
   version: string
 }
 
+export type OrderAccessoryDto = {
+  id: number
+  name: string
+  description: string
+  price: number
+  car: CarDto | null
+}
+
 export type OrderResponse = {
   id: number
   orderDate: string
@@ -25,7 +33,7 @@ export type OrderResponse = {
   status: string
   client: ClientDto
   car: CarDto
-  accessories: unknown[]
+  accessories: OrderAccessoryDto[]
 }
 
 /**
@@ -46,8 +54,7 @@ export async function fetchOrdersPage(page: number, size: number): Promise<Sprin
 export type CreateOrderPayload = {
   clientId: number
   carId: number
-  accessoryId: number
-  totalPrice: number
+  accessoryIds: number[]
   status: string
 }
 
