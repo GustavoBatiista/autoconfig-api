@@ -19,6 +19,8 @@ export type CarDto = {
 export type OrderResponse = {
   id: number
   orderDate: string
+  /** ISO timestamp from backend auditing (createdAt); may be null for old rows. */
+  createdAt: string | null
   totalPrice: number
   status: string
   client: ClientDto
@@ -45,7 +47,6 @@ export type CreateOrderPayload = {
   clientId: number
   carId: number
   accessoryId: number
-  orderDate: string
   totalPrice: number
   status: string
 }
