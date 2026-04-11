@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchOrdersPage, type OrderResponse } from '../../api/ordersApi'
+import { fetchOrdersPage, type OrderAccessoryDto, type OrderResponse } from '../../api/ordersApi'
 import { DashListHeader } from '../../components/dashboard/DashListHeader'
 import {
   orderStatusBadgeClass,
@@ -30,6 +30,11 @@ function vehicleLabel(car: OrderResponse['car']): string {
 
 function clientLabel(c: OrderResponse['client']): string {
   return `${c.name} ${c.lastName}`.trim()
+}
+
+function accessoriesSummary(items: OrderAccessoryDto[]): string {
+  if (!items.length) return '—'
+  return items.map((a) => a.name).join(', ')
 }
 
 export function OrdersPage() {
@@ -134,6 +139,10 @@ export function OrdersPage() {
               <div className="dash-order-card__row">
                 <span className="dash-order-card__label">Veículo</span>
                 <span className="dash-order-card__value">{vehicleLabel(o.car)}</span>
+              </div>
+              <div className="dash-order-card__row">
+                <span className="dash-order-card__label">Acessórios</span>
+                <span className="dash-order-card__value">{accessoriesSummary(o.accessories)}</span>
               </div>
               <div className="dash-order-card__row dash-order-card__row--status">
                 <span className="dash-order-card__label">Status</span>
