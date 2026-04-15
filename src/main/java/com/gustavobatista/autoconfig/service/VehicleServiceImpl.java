@@ -145,12 +145,15 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     private OrderResponseDTO toOrderResponse(Order order) {
+        var seller = order.getUserId();
+        Long sellerId = seller == null ? null : seller.getId();
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
                 order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
+                sellerId,
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
                 order.getAccessories() == null
