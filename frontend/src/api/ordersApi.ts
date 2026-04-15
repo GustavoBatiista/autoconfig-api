@@ -31,6 +31,8 @@ export type OrderResponse = {
   createdAt: string | null
   totalPrice: number
   status: string
+  /** Backend user id of the seller who created the order. */
+  sellerId: number
   client: ClientDto
   car: CarDto
   accessories: OrderAccessoryDto[]
@@ -67,4 +69,30 @@ export async function createOrder(payload: CreateOrderPayload): Promise<OrderRes
     throw new Error(await readApiErrorMessage(res, `Falha ao criar pedido (${res.status})`))
   }
   return (await res.json()) as OrderResponse
+}
+
+export async function fetchOrderById(id: number): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${id}`)
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao carregar pedido (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
+}
+
+export async function updateOrder(id: number, payload: CreateOrderPayload): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao atualizar pedido (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
+}
+
+export async function deleteOrder(id: number): Promise<void> {
+  const res = await apiFetch(`/orders/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao excluir pedido (${res.status})`))
+  }
 }

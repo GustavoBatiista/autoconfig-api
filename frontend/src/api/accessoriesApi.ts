@@ -46,3 +46,32 @@ export async function createAccessory(payload: CreateAccessoryPayload): Promise<
   }
   return (await res.json()) as AccessoryResponse
 }
+
+export async function fetchAccessoryById(id: number): Promise<AccessoryResponse> {
+  const res = await apiFetch(`/accessories/${id}`)
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao carregar acessorio (${res.status})`))
+  }
+  return (await res.json()) as AccessoryResponse
+}
+
+export async function updateAccessory(
+  id: number,
+  payload: CreateAccessoryPayload,
+): Promise<AccessoryResponse> {
+  const res = await apiFetch(`/accessories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao atualizar acessorio (${res.status})`))
+  }
+  return (await res.json()) as AccessoryResponse
+}
+
+export async function deleteAccessory(id: number): Promise<void> {
+  const res = await apiFetch(`/accessories/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao excluir acessorio (${res.status})`))
+  }
+}

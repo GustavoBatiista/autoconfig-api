@@ -37,3 +37,29 @@ export async function createClient(payload: CreateClientPayload): Promise<Client
   }
   return (await res.json()) as ClientResponse
 }
+
+export async function fetchClientById(id: number): Promise<ClientResponse> {
+  const res = await apiFetch(`/clients/${id}`)
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao carregar cliente (${res.status})`))
+  }
+  return (await res.json()) as ClientResponse
+}
+
+export async function updateClient(id: number, payload: CreateClientPayload): Promise<ClientResponse> {
+  const res = await apiFetch(`/clients/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao atualizar cliente (${res.status})`))
+  }
+  return (await res.json()) as ClientResponse
+}
+
+export async function deleteClient(id: number): Promise<void> {
+  const res = await apiFetch(`/clients/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao excluir cliente (${res.status})`))
+  }
+}

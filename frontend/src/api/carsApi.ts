@@ -37,3 +37,29 @@ export async function createCar(payload: CreateCarPayload): Promise<CarResponse>
   }
   return (await res.json()) as CarResponse
 }
+
+export async function fetchCarById(id: number): Promise<CarResponse> {
+  const res = await apiFetch(`/cars/${id}`)
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao carregar carro (${res.status})`))
+  }
+  return (await res.json()) as CarResponse
+}
+
+export async function updateCar(id: number, payload: CreateCarPayload): Promise<CarResponse> {
+  const res = await apiFetch(`/cars/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao atualizar carro (${res.status})`))
+  }
+  return (await res.json()) as CarResponse
+}
+
+export async function deleteCar(id: number): Promise<void> {
+  const res = await apiFetch(`/cars/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao excluir carro (${res.status})`))
+  }
+}
