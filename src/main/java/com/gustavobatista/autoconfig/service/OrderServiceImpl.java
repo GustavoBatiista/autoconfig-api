@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -214,20 +213,13 @@ public class OrderServiceImpl implements OrderService {
                         : order.getAccessories().stream().map(this::toAccessoryResponse).toList());
     }
 
-    /**
-     * ADMIN and MANAGER may change any order; SELLER only orders they created.
-     * Other roles are rejected here if they reach the service (HTTP layer should block first).
-     */
     private void assertCanMutateOrder(Order order) {
         User current = getCurrentUserOrThrow();
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new UnauthorizedException("Unauthorized");
-        }
-        if (hasAuthority(auth, Role.ROLE_ADMIN) || hasAuthority(auth, Role.ROLE_MANAGER)) {
+        Role role = current.getRole();
+        if (role == Role.ROLE_ADMIN || role == Role.ROLE_MANAGER) {
             return;
         }
-        if (hasAuthority(auth, Role.ROLE_SELLER)) {
+        if (role == Role.ROLE_SELLER) {
             User owner = order.getUserId();
             if (owner == null || !owner.getId().equals(current.getId())) {
                 throw new ForbiddenOperationException(
@@ -239,16 +231,6 @@ public class OrderServiceImpl implements OrderService {
         throw new ForbiddenOperationException(
                 ErrorCode.ORDER_MUTATION_FORBIDDEN,
                 "Not allowed to modify orders");
-    }
-
-    private static boolean hasAuthority(Authentication auth, Role role) {
-        String expected = role.name();
-        for (GrantedAuthority a : auth.getAuthorities()) {
-            if (expected.equals(a.getAuthority())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private ClientResponseDTO toClientResponse(Client client) {
