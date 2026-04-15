@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +29,10 @@ import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.entity.Order;
 import com.gustavobatista.autoconfig.entity.User;
+import com.gustavobatista.autoconfig.enums.Role;
 import com.gustavobatista.autoconfig.exception.BusinessRuleException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
+import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
 import com.gustavobatista.autoconfig.exception.UnauthorizedException;
 import com.gustavobatista.autoconfig.repository.AccessoryRepository;
@@ -99,6 +102,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + id));
 
+        assertCanMutateOrder(order);
+
         Client client = clientRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "Client not found: " + dto.getClientId()));
         Car car = carRepository.findById(dto.getCarId())
@@ -125,6 +130,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + id));
+
+        assertCanMutateOrder(order);
 
         orderRepository.delete(order);
         log.info("Order deleted: id={}", id);
@@ -191,17 +198,57 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderResponseDTO toResponse(Order order) {
+        User seller = order.getUserId();
+        Long sellerId = seller == null ? null : seller.getId();
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
                 order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
+                sellerId,
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
                 order.getAccessories() == null
                         ? List.of()
                         : order.getAccessories().stream().map(this::toAccessoryResponse).toList());
+    }
+
+    /**
+     * ADMIN and MANAGER may change any order; SELLER only orders they created.
+     * Other roles are rejected here if they reach the service (HTTP layer should block first).
+     */
+    private void assertCanMutateOrder(Order order) {
+        User current = getCurrentUserOrThrow();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new UnauthorizedException("Unauthorized");
+        }
+        if (hasAuthority(auth, Role.ROLE_ADMIN) || hasAuthority(auth, Role.ROLE_MANAGER)) {
+            return;
+        }
+        if (hasAuthority(auth, Role.ROLE_SELLER)) {
+            User owner = order.getUserId();
+            if (owner == null || !owner.getId().equals(current.getId())) {
+                throw new ForbiddenOperationException(
+                        ErrorCode.ORDER_MUTATION_FORBIDDEN,
+                        "Sellers may only modify or delete orders they created");
+            }
+            return;
+        }
+        throw new ForbiddenOperationException(
+                ErrorCode.ORDER_MUTATION_FORBIDDEN,
+                "Not allowed to modify orders");
+    }
+
+    private static boolean hasAuthority(Authentication auth, Role role) {
+        String expected = role.name();
+        for (GrantedAuthority a : auth.getAuthorities()) {
+            if (expected.equals(a.getAuthority())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private ClientResponseDTO toClientResponse(Client client) {
