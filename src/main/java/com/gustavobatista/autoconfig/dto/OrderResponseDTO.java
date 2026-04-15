@@ -14,18 +14,21 @@ public class OrderResponseDTO {
     private final LocalDateTime createdAt;
     private final BigDecimal totalPrice;
     private final OrderStatus status;
+    /** User id of the seller who created the order ({@code orders.user_id}). */
+    private final Long sellerId;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
     private final List<AccessoryResponseDTO> accessories;
 
     public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, BigDecimal totalPrice,
-            OrderStatus status,
+            OrderStatus status, Long sellerId,
             ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories) {
         this.id = id;
         this.orderDate = orderDate;
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;
         this.status = status;
+        this.sellerId = sellerId;
         this.client = client;
         this.car = car;
         this.accessories = accessories;
@@ -49,6 +52,10 @@ public class OrderResponseDTO {
 
     public OrderStatus getStatus() {
         return status;
+    }
+
+    public Long getSellerId() {
+        return sellerId;
     }
 
     public ClientResponseDTO getClient() {
