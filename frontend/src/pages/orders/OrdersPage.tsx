@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { fetchMe, type MeResponse } from '../../api/authApi'
 import { fetchOrdersPage, type OrderAccessoryDto, type OrderResponse } from '../../api/ordersApi'
 import { DashListHeader } from '../../components/dashboard/DashListHeader'
+import { canMutateOrderInUi } from '../../domain/orderPermissions'
 import {
   orderStatusBadgeClass,
   orderStatusBucket,
@@ -39,9 +41,24 @@ function accessoriesSummary(items: OrderAccessoryDto[]): string {
 
 export function OrdersPage() {
   const navigate = useNavigate()
+  const [me, setMe] = useState<MeResponse | null>(null)
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchMe()
+      .then((m) => {
+        if (!cancelled) setMe(m)
+      })
+      .catch(() => {
+        if (!cancelled) setMe(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -154,6 +171,24 @@ export function OrdersPage() {
                   {formatCreatedAt(o.createdAt, o.orderDate)}
                 </time>
               </div>
+              {me && canMutateOrderInUi(me, o) ? (
+                <div className="dash-order-card__actions">
+                  <button
+                    type="button"
+                    className="dash-btn-secondary"
+                    onClick={() => navigate({ pathname: 'orders/edit', search: `?id=${o.id}` })}
+                  >
+                    Alterar
+                  </button>
+                  <button
+                    type="button"
+                    className="dash-btn-danger"
+                    onClick={() => navigate({ pathname: 'orders/delete', search: `?id=${o.id}` })}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              ) : null}
             </article>
           ))
         )}
