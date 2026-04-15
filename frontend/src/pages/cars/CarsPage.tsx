@@ -6,7 +6,8 @@ import { DashListHeader } from '../../components/dashboard/DashListHeader'
 export function CarsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const canCreate = location.pathname.startsWith('/manager')
+  /** Manager (and admin using manager UI): API allows POST/PUT/DELETE on cars; seller is read-only. */
+  const canMutateCars = location.pathname.startsWith('/manager')
   const [cars, setCars] = useState<CarResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,10 +36,18 @@ export function CarsPage() {
       <DashListHeader
         title="Carros"
         actions={
-          canCreate ? (
-            <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
-              Criar
-            </button>
+          canMutateCars ? (
+            <>
+              <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
+                Criar
+              </button>
+              <button type="button" className="dash-btn-secondary" onClick={() => navigate('edit')}>
+                Alterar
+              </button>
+              <button type="button" className="dash-btn-secondary" onClick={() => navigate('delete')}>
+                Excluir
+              </button>
+            </>
           ) : undefined
         }
       />
