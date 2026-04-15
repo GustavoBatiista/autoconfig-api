@@ -33,9 +33,17 @@ export function ClientsPage() {
       <DashListHeader
         title="Clientes"
         actions={
-          <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
-            Criar
-          </button>
+          <>
+            <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
+              Criar
+            </button>
+            <button type="button" className="dash-btn-secondary" onClick={() => navigate('edit')}>
+              Alterar
+            </button>
+            <button type="button" className="dash-btn-secondary" onClick={() => navigate('delete')}>
+              Excluir
+            </button>
+          </>
         }
       />
 
