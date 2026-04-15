@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchAccessoriesPage, type AccessoryResponse } from '../../api/accessoriesApi'
 import { DashListHeader } from '../../components/dashboard/DashListHeader'
-
-function carLabel(car: AccessoryResponse['car']): string {
-  const v = car.version?.trim()
-  return [car.brand, car.model, v].filter(Boolean).join(' ')
-}
+import { formatCarDisplay } from './carDisplay'
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)
@@ -45,9 +41,17 @@ export function AccessoriesPage() {
         title="Acessórios"
         actions={
           canCreate ? (
-            <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
-              Criar
-            </button>
+            <>
+              <button type="button" className="dash-btn-primary" onClick={() => navigate('new')}>
+                Criar
+              </button>
+              <button type="button" className="dash-btn-secondary" onClick={() => navigate('edit')}>
+                Alterar
+              </button>
+              <button type="button" className="dash-btn-secondary" onClick={() => navigate('delete')}>
+                Excluir
+              </button>
+            </>
           ) : undefined
         }
       />
@@ -85,7 +89,7 @@ export function AccessoriesPage() {
                   <td>{a.name}</td>
                   <td>{a.description}</td>
                   <td>{formatPrice(a.price)}</td>
-                  <td>{carLabel(a.car)}</td>
+                  <td>{formatCarDisplay(a.car.brand, a.car.model, a.car.version)}</td>
                 </tr>
               ))
             )}
