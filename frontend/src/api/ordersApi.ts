@@ -24,18 +24,27 @@ export type OrderAccessoryDto = {
   car: CarDto | null
 }
 
+export type VehicleEntrySummaryDto = {
+  id: number
+  chassis: string
+  arrivalDate: string
+  condition: string
+}
+
 export type OrderResponse = {
   id: number
   orderDate: string
-  /** ISO timestamp from backend auditing (createdAt); may be null for old rows. */
   createdAt: string | null
   totalPrice: number
   status: string
-  /** Backend user id of the seller who created the order. */
+  vehicleArrived: boolean
+  accessoriesConfirmed: boolean
+  installationCompleted: boolean
   sellerId: number
   client: ClientDto
   car: CarDto
   accessories: OrderAccessoryDto[]
+  vehicleEntry: VehicleEntrySummaryDto | null
 }
 
 /**
@@ -57,8 +66,9 @@ export type CreateOrderPayload = {
   clientId: number
   carId: number
   accessoryIds: number[]
-  status: string
 }
+
+export type UpdateOrderPayload = CreateOrderPayload
 
 export async function createOrder(payload: CreateOrderPayload): Promise<OrderResponse> {
   const res = await apiFetch('/orders', {
@@ -79,7 +89,7 @@ export async function fetchOrderById(id: number): Promise<OrderResponse> {
   return (await res.json()) as OrderResponse
 }
 
-export async function updateOrder(id: number, payload: CreateOrderPayload): Promise<OrderResponse> {
+export async function updateOrder(id: number, payload: UpdateOrderPayload): Promise<OrderResponse> {
   const res = await apiFetch(`/orders/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
@@ -95,4 +105,37 @@ export async function deleteOrder(id: number): Promise<void> {
   if (!res.ok) {
     throw new Error(await readApiErrorMessage(res, `Falha ao excluir pedido (${res.status})`))
   }
+}
+
+export type ConfirmVehiclePayload = {
+  chassis: string
+  arrivalDate: string
+  condition: string
+}
+
+export async function confirmOrderVehicle(orderId: number, payload: ConfirmVehiclePayload): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${orderId}/confirm-vehicle`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao confirmar veiculo (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
+}
+
+export async function confirmOrderAccessories(orderId: number): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${orderId}/confirm-accessories`, { method: 'PATCH' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao confirmar acessorios (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
+}
+
+export async function confirmOrderInstallation(orderId: number): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${orderId}/confirm-installation`, { method: 'PATCH' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao confirmar instalacao (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
 }

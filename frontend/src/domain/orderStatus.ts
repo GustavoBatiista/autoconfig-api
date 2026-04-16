@@ -1,8 +1,8 @@
 export type StatusBucket = 'pending' | 'processing' | 'done'
 
-const PENDING = new Set(['WAITING_FOR_VEHICLE'])
-const PROCESSING = new Set(['VEHICLE_ARRIVED', 'IN_INSTALLATION'])
-const DONE = new Set(['READY'])
+const PENDING = new Set(['WAITING_VEHICLE'])
+const PROCESSING = new Set(['WAITING_ACCESSORIES', 'WAITING_SCHEDULING'])
+const DONE = new Set(['READY_FOR_DELIVERY'])
 
 export function orderStatusBucket(status: string): StatusBucket {
   if (PENDING.has(status)) return 'pending'
@@ -13,29 +13,29 @@ export function orderStatusBucket(status: string): StatusBucket {
 
 export function orderStatusLabelPt(status: string): string {
   switch (status) {
-    case 'WAITING_FOR_VEHICLE':
+    case 'WAITING_VEHICLE':
       return 'Aguardando veículo'
-    case 'VEHICLE_ARRIVED':
-      return 'Veículo chegou'
-    case 'IN_INSTALLATION':
-      return 'Em instalação'
-    case 'READY':
-      return 'Concluído'
+    case 'WAITING_ACCESSORIES':
+      return 'Aguardando acessório'
+    case 'WAITING_SCHEDULING':
+      return 'Aguardando agendamento'
+    case 'READY_FOR_DELIVERY':
+      return 'Pronto para entrega'
     default:
       return status
   }
 }
 
-/** Short label for table badges (closer to the mock). */
 export function orderStatusShortLabelPt(status: string): string {
   switch (status) {
-    case 'WAITING_FOR_VEHICLE':
-      return 'Aguardando'
-    case 'VEHICLE_ARRIVED':
-    case 'IN_INSTALLATION':
-      return 'Em processamento'
-    case 'READY':
-      return 'Concluído'
+    case 'WAITING_VEHICLE':
+      return 'Aguardando veículo'
+    case 'WAITING_ACCESSORIES':
+      return 'Aguardando acessórios'
+    case 'WAITING_SCHEDULING':
+      return 'Aguardando agendamento'
+    case 'READY_FOR_DELIVERY':
+      return 'Pronto p/ entrega'
     default:
       return orderStatusLabelPt(status)
   }
@@ -47,11 +47,3 @@ export function orderStatusBadgeClass(status: string): string {
   if (b === 'processing') return 'dash-badge dash-badge--processing'
   return 'dash-badge dash-badge--done'
 }
-
-
-export const ORDER_STATUS_FORM_OPTIONS = [
-  { value: 'WAITING_FOR_VEHICLE', label: 'Aguardando veículo' },
-  { value: 'VEHICLE_ARRIVED', label: 'Veículo chegou' },
-  { value: 'IN_INSTALLATION', label: 'Em instalação' },
-  { value: 'READY', label: 'Concluído' },
-] as const

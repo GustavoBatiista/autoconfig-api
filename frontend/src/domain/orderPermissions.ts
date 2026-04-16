@@ -13,3 +13,17 @@ export function canMutateOrderInUi(me: MeResponse, order: OrderResponse): boolea
   if (me.role === 'ROLE_SELLER') return order.sellerId === me.id
   return true
 }
+
+const CONFIRM_VEHICLE_ROLES = new Set([
+  'ROLE_ADMIN',
+  'ROLE_MANAGER',
+  'ROLE_VEHICLE_STOCK',
+  'ROLE_SELLER',
+])
+
+export function canConfirmVehicleInUi(me: MeResponse, order: OrderResponse): boolean {
+  if (!CONFIRM_VEHICLE_ROLES.has(me.role)) return false
+  if (order.vehicleArrived) return false
+  if (me.role === 'ROLE_SELLER') return order.sellerId === me.id
+  return true
+}
