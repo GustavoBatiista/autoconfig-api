@@ -4,7 +4,6 @@ import { fetchAccessoriesPage, type AccessoryResponse } from '../../api/accessor
 import { fetchCarsPage, type CarResponse } from '../../api/carsApi'
 import { fetchClientsPage, type ClientResponse } from '../../api/clientsApi'
 import { createOrder } from '../../api/ordersApi'
-import { ORDER_STATUS_FORM_OPTIONS } from '../../domain/orderStatus'
 
 const moneyBr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -28,7 +27,6 @@ export function OrderCreatePage() {
   const [clientId, setClientId] = useState<number | ''>('')
   const [carId, setCarId] = useState<number | ''>('')
   const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<Set<number>>(new Set())
-  const [status, setStatus] = useState<string>(ORDER_STATUS_FORM_OPTIONS[0].value)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -115,7 +113,6 @@ export function OrderCreatePage() {
         clientId,
         carId,
         accessoryIds: [...selectedAccessoryIds],
-        status,
       })
       navigate('..')
     } catch (err) {
@@ -138,7 +135,8 @@ export function OrderCreatePage() {
 
       <p className="dash-hint">
         A data do pedido e o registro de criação são definidos automaticamente no servidor. O preço total do pedido é a
-        soma dos acessórios selecionados (calculada no servidor a partir dos valores cadastrados).
+        soma dos acessórios selecionados (calculada no servidor a partir dos valores cadastrados). O status do pedido é
+        definido pelo fluxo de confirmações (veículo, acessórios, instalação).
       </p>
 
       {listsError ? <p className="dash-error">{listsError}</p> : null}
@@ -187,16 +185,6 @@ export function OrderCreatePage() {
           <label>
             Preco total (soma dos acessórios)
             <input type="text" readOnly value={moneyBr.format(computedTotal)} className="dash-input-readonly" />
-          </label>
-          <label>
-            Status
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              {ORDER_STATUS_FORM_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
           </label>
         </div>
 

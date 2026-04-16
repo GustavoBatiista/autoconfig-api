@@ -8,11 +8,11 @@ import { OrdersPage } from './pages/orders/OrdersPage'
 import { OrderCreatePage } from './pages/orders/OrderCreatePage'
 import { OrderEditPage } from './pages/orders/OrderEditPage'
 import { OrderDeletePage } from './pages/orders/OrderDeletePage'
+import { OrderVehicleDataPage } from './pages/orders/OrderVehicleDataPage'
+import { OrderDetailPage } from './pages/orders/OrderDetailPage'
 import { CarsPage } from './pages/cars/CarsPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { AccessoriesPage } from './pages/accessories/AccessoriesPage'
-import { VehicleStockPage } from './pages/vehicles/VehicleStockPage'
-import { VehicleEntryCreatePage } from './pages/vehicles/VehicleEntryCreatePage'
 import { UsersPage } from './pages/users/UsersPage'
 import { ClientCreatePage } from './pages/clients/ClientCreatePage'
 import { ClientEditPage } from './pages/clients/ClientEditPage'
@@ -43,6 +43,8 @@ export default function App() {
           <Route path="orders/new" element={<OrderCreatePage />} />
           <Route path="orders/edit" element={<OrderEditPage />} />
           <Route path="orders/delete" element={<OrderDeletePage />} />
+          <Route path="orders/vehicle-data" element={<OrderVehicleDataPage />} />
+          <Route path="orders/detail" element={<OrderDetailPage />} />
           <Route path="cars" element={<CarsPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="clients/new" element={<ClientCreatePage />} />
@@ -54,6 +56,8 @@ export default function App() {
           <Route path="orders/new" element={<OrderCreatePage />} />
           <Route path="orders/edit" element={<OrderEditPage />} />
           <Route path="orders/delete" element={<OrderDeletePage />} />
+          <Route path="orders/vehicle-data" element={<OrderVehicleDataPage />} />
+          <Route path="orders/detail" element={<OrderDetailPage />} />
           <Route path="cars" element={<CarsPage />} />
           <Route path="cars/new" element={<CarCreatePage />} />
           <Route path="cars/edit" element={<CarEditPage />} />
@@ -66,8 +70,6 @@ export default function App() {
           <Route path="accessories/new" element={<AccessoryCreatePage />} />
           <Route path="accessories/edit" element={<AccessoryEditPage />} />
           <Route path="accessories/delete" element={<AccessoryDeletePage />} />
-          <Route path="vehicles" element={<VehicleStockPage />} />
-          <Route path="vehicles/new" element={<VehicleEntryCreatePage />} />
           <Route path="users" element={<UsersPage />} />
         </Route>
         <Route path="home" element={<HomePage />} />

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { fetchMe, type MeResponse } from '../../api/authApi'
 import { fetchOrdersPage, type OrderAccessoryDto, type OrderResponse } from '../../api/ordersApi'
 import { DashListHeader } from '../../components/dashboard/DashListHeader'
-import { canMutateOrderInUi } from '../../domain/orderPermissions'
+import { canConfirmVehicleInUi, canMutateOrderInUi } from '../../domain/orderPermissions'
 import {
   orderStatusBadgeClass,
   orderStatusBucket,
@@ -147,7 +147,12 @@ export function OrdersPage() {
           <div className="dash-order-cards__empty">Nenhum pedido encontrado.</div>
         ) : (
           orders.map((o) => (
-            <article key={o.id} className="dash-order-card" role="listitem">
+            <article
+              key={o.id}
+              className="dash-order-card dash-order-card--clickable"
+              role="listitem"
+              onClick={() => navigate({ pathname: 'orders/detail', search: `?id=${o.id}` })}
+            >
               <div className="dash-order-card__id">Pedido #{o.id}</div>
               <div className="dash-order-card__row">
                 <span className="dash-order-card__label">Cliente</span>
@@ -171,22 +176,35 @@ export function OrdersPage() {
                   {formatCreatedAt(o.createdAt, o.orderDate)}
                 </time>
               </div>
-              {me && canMutateOrderInUi(me, o) ? (
-                <div className="dash-order-card__actions">
-                  <button
-                    type="button"
-                    className="dash-btn-secondary"
-                    onClick={() => navigate({ pathname: 'orders/edit', search: `?id=${o.id}` })}
-                  >
-                    Alterar
-                  </button>
-                  <button
-                    type="button"
-                    className="dash-btn-danger"
-                    onClick={() => navigate({ pathname: 'orders/delete', search: `?id=${o.id}` })}
-                  >
-                    Excluir
-                  </button>
+              {me && (canConfirmVehicleInUi(me, o) || canMutateOrderInUi(me, o)) ? (
+                <div className="dash-order-card__actions" onClick={(e) => e.stopPropagation()}>
+                  {canConfirmVehicleInUi(me, o) ? (
+                    <button
+                      type="button"
+                      className="dash-btn-secondary"
+                      onClick={() => navigate({ pathname: 'orders/vehicle-data', search: `?id=${o.id}` })}
+                    >
+                      Incluir dados
+                    </button>
+                  ) : null}
+                  {canMutateOrderInUi(me, o) ? (
+                    <>
+                      <button
+                        type="button"
+                        className="dash-btn-secondary"
+                        onClick={() => navigate({ pathname: 'orders/edit', search: `?id=${o.id}` })}
+                      >
+                        Alterar
+                      </button>
+                      <button
+                        type="button"
+                        className="dash-btn-danger"
+                        onClick={() => navigate({ pathname: 'orders/delete', search: `?id=${o.id}` })}
+                      >
+                        Excluir
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
             </article>

@@ -9,7 +9,6 @@ const MANAGER_NAV: DashboardNavItem[] = [
   { to: '/manager/cars', label: 'Carros', icon: '🚗' },
   { to: '/manager/clients', label: 'Cliente', icon: '👤' },
   { to: '/manager/accessories', label: 'Acessórios', icon: '🔩' },
-  { to: '/manager/vehicles', label: 'Estoque veículos', icon: '📦' },
   { to: '/manager/users', label: 'Usuários', icon: '👥' },
 ]
 

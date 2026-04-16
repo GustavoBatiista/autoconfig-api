@@ -4,7 +4,7 @@ import { fetchAccessoriesPage, type AccessoryResponse } from '../../api/accessor
 import { fetchCarsPage, type CarResponse } from '../../api/carsApi'
 import { fetchClientsPage, type ClientResponse } from '../../api/clientsApi'
 import { fetchOrderById, updateOrder } from '../../api/ordersApi'
-import { ORDER_STATUS_FORM_OPTIONS } from '../../domain/orderStatus'
+import { orderStatusLabelPt } from '../../domain/orderStatus'
 import { parseEntityId } from '../../utils/parseEntityId'
 
 const moneyBr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -34,7 +34,7 @@ export function OrderEditPage() {
   const [clientId, setClientId] = useState<number | ''>('')
   const [carId, setCarId] = useState<number | ''>('')
   const [selectedAccessoryIds, setSelectedAccessoryIds] = useState<Set<number>>(new Set())
-  const [status, setStatus] = useState<string>(ORDER_STATUS_FORM_OPTIONS[0].value)
+  const [loadedStatus, setLoadedStatus] = useState<string | null>(null)
 
   const [error, setError] = useState<string | null>(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
@@ -74,10 +74,11 @@ export function OrderEditPage() {
       setLoadedId(o.id)
       setClientId(o.client.id)
       setCarId(o.car.id)
-      setStatus(o.status)
+      setLoadedStatus(o.status)
       setSelectedAccessoryIds(new Set(o.accessories.map((a) => a.id)))
     } catch (err) {
       setLoadedId(null)
+      setLoadedStatus(null)
       setError(err instanceof Error ? err.message : 'Erro ao carregar pedido')
     } finally {
       setLoadingOrder(false)
@@ -158,7 +159,6 @@ export function OrderEditPage() {
         clientId,
         carId,
         accessoryIds: [...selectedAccessoryIds],
-        status,
       })
       navigate('..')
     } catch (err) {
@@ -181,7 +181,7 @@ export function OrderEditPage() {
       <h2 className="dash-page__heading">Alterar pedido</h2>
       <p className="dash-hint">
         Use o numero do pedido na lista, carregue os dados e edite. Vendedores so podem alterar pedidos que criaram
-        (o servidor valida).
+        (o servidor valida). O status exibido é calculado no servidor a partir das confirmações de fluxo.
       </p>
 
       {listsError ? <p className="dash-error">{listsError}</p> : null}
@@ -252,18 +252,14 @@ export function OrderEditPage() {
             <input type="text" readOnly value={moneyBr.format(computedTotal)} className="dash-input-readonly" />
           </label>
           <label>
-            Status
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              disabled={loadedId == null || saving}
-            >
-              {ORDER_STATUS_FORM_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            Status atual
+            <input
+              type="text"
+              readOnly
+              className="dash-input-readonly"
+              value={loadedId != null && loadedStatus != null ? orderStatusLabelPt(loadedStatus) : ''}
+              placeholder="Carregue um pedido"
+            />
           </label>
         </div>
 
