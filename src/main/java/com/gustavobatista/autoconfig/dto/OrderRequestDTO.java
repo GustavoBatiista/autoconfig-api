@@ -2,8 +2,6 @@ package com.gustavobatista.autoconfig.dto;
 
 import java.util.List;
 
-import com.gustavobatista.autoconfig.enums.OrderStatus;
-
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,14 +13,11 @@ public class OrderRequestDTO {
     private final Long carId;
     @NotEmpty(message = "At least one accessory is required")
     private final List<Long> accessoryIds;
-    @NotNull(message = "Status is required")
-    private final OrderStatus status;
 
-    public OrderRequestDTO(Long clientId, Long carId, List<Long> accessoryIds, OrderStatus status) {
+    public OrderRequestDTO(Long clientId, Long carId, List<Long> accessoryIds) {
         this.clientId = clientId;
         this.carId = carId;
         this.accessoryIds = accessoryIds == null ? List.of() : List.copyOf(accessoryIds);
-        this.status = status;
     }
 
     public Long getClientId() {
@@ -36,9 +31,4 @@ public class OrderRequestDTO {
     public List<Long> getAccessoryIds() {
         return accessoryIds;
     }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
 }

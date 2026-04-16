@@ -35,6 +35,12 @@ public class Order extends Auditable {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;
+    @Column(name = "vehicle_arrived", nullable = false)
+    private boolean vehicleArrived;
+    @Column(name = "accessories_confirmed", nullable = false)
+    private boolean accessoriesConfirmed;
+    @Column(name = "installation_completed", nullable = false)
+    private boolean installationCompleted;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User userId;
@@ -53,17 +59,18 @@ public class Order extends Auditable {
     }
 
     public Order(Long id, LocalDateTime orderDate, BigDecimal totalPrice, OrderStatus status, User userId, Client clientId,
-            Car carId,
-
-            List<Accessory> accessories) {
+            Car carId, List<Accessory> accessories, boolean vehicleArrived, boolean accessoriesConfirmed,
+            boolean installationCompleted) {
         this.id = id;
         this.orderDate = orderDate;
         this.totalPrice = totalPrice;
         this.status = status;
+        this.vehicleArrived = vehicleArrived;
+        this.accessoriesConfirmed = accessoriesConfirmed;
+        this.installationCompleted = installationCompleted;
         this.userId = userId;
         this.clientId = clientId;
         this.carId = carId;
-
         this.accessories = accessories;
     }
 
@@ -101,6 +108,30 @@ public class Order extends Auditable {
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public boolean isVehicleArrived() {
+        return vehicleArrived;
+    }
+
+    public void setVehicleArrived(boolean vehicleArrived) {
+        this.vehicleArrived = vehicleArrived;
+    }
+
+    public boolean isAccessoriesConfirmed() {
+        return accessoriesConfirmed;
+    }
+
+    public void setAccessoriesConfirmed(boolean accessoriesConfirmed) {
+        this.accessoriesConfirmed = accessoriesConfirmed;
+    }
+
+    public boolean isInstallationCompleted() {
+        return installationCompleted;
+    }
+
+    public void setInstallationCompleted(boolean installationCompleted) {
+        this.installationCompleted = installationCompleted;
     }
 
     public Client getClientId() {

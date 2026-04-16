@@ -10,28 +10,35 @@ public class OrderResponseDTO {
 
     private final Long id;
     private final LocalDateTime orderDate;
-    /** Persisted creation timestamp from {@link com.gustavobatista.autoconfig.entity.Auditable}. */
     private final LocalDateTime createdAt;
     private final BigDecimal totalPrice;
     private final OrderStatus status;
-    /** User id of the seller who created the order ({@code orders.user_id}). */
+    private final boolean vehicleArrived;
+    private final boolean accessoriesConfirmed;
+    private final boolean installationCompleted;
     private final Long sellerId;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
     private final List<AccessoryResponseDTO> accessories;
+    private final VehicleEntrySummaryDTO vehicleEntry;
 
     public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, BigDecimal totalPrice,
-            OrderStatus status, Long sellerId,
-            ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories) {
+            OrderStatus status, boolean vehicleArrived, boolean accessoriesConfirmed, boolean installationCompleted,
+            Long sellerId, ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories,
+            VehicleEntrySummaryDTO vehicleEntry) {
         this.id = id;
         this.orderDate = orderDate;
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;
         this.status = status;
+        this.vehicleArrived = vehicleArrived;
+        this.accessoriesConfirmed = accessoriesConfirmed;
+        this.installationCompleted = installationCompleted;
         this.sellerId = sellerId;
         this.client = client;
         this.car = car;
         this.accessories = accessories;
+        this.vehicleEntry = vehicleEntry;
     }
 
     public Long getId() {
@@ -54,6 +61,18 @@ public class OrderResponseDTO {
         return status;
     }
 
+    public boolean isVehicleArrived() {
+        return vehicleArrived;
+    }
+
+    public boolean isAccessoriesConfirmed() {
+        return accessoriesConfirmed;
+    }
+
+    public boolean isInstallationCompleted() {
+        return installationCompleted;
+    }
+
     public Long getSellerId() {
         return sellerId;
     }
@@ -70,4 +89,7 @@ public class OrderResponseDTO {
         return accessories;
     }
 
+    public VehicleEntrySummaryDTO getVehicleEntry() {
+        return vehicleEntry;
+    }
 }
