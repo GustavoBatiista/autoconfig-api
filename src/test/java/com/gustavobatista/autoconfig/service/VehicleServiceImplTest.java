@@ -3,6 +3,8 @@ package com.gustavobatista.autoconfig.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,6 +63,7 @@ class VehicleServiceImplTest {
         order = TestFixtures.order(1L, TestFixtures.userAdmin(), TestFixtures.client(1L), TestFixtures.car(2L));
         LocalDateTime arrival = LocalDateTime.of(2025, 3, 1, 8, 0);
         validDto = new VehicleEntryRequestDTO(CHASSIS_17, arrival, VehicleCondition.PERFECT, 1L);
+        lenient().when(vehicleEntryRepository.findByOrderId_Id(anyLong())).thenReturn(Optional.empty());
     }
 
     @Test

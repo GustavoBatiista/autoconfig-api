@@ -44,10 +44,13 @@ public final class TestFixtures {
                 id,
                 LocalDateTime.of(2025, 1, 1, 12, 0),
                 new BigDecimal("100.00"),
-                OrderStatus.WAITING_FOR_VEHICLE,
+                OrderStatus.WAITING_VEHICLE,
                 seller,
                 client,
                 car,
-                java.util.List.of());
+                java.util.List.of(),
+                false,
+                false,
+                false);
     }
 }

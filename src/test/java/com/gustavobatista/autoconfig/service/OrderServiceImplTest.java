@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +41,7 @@ import com.gustavobatista.autoconfig.repository.CarRepository;
 import com.gustavobatista.autoconfig.repository.ClientRepository;
 import com.gustavobatista.autoconfig.repository.OrderRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
+import com.gustavobatista.autoconfig.repository.VehicleEntryRepository;
 import com.gustavobatista.autoconfig.support.SecurityContextTestUtils;
 import com.gustavobatista.autoconfig.support.TestFixtures;
 
@@ -60,6 +63,9 @@ class OrderServiceImplTest {
     @Mock
     private AccessoryRepository accessoryRepository;
 
+    @Mock
+    private VehicleEntryRepository vehicleEntryRepository;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
@@ -75,7 +81,23 @@ class OrderServiceImplTest {
         client = TestFixtures.client(1L);
         car = TestFixtures.car(2L);
         accessory = new Accessory(3L, "Rack", "Roof", new BigDecimal("50.00"), car);
-        validDto = new OrderRequestDTO(1L, 2L, List.of(3L), OrderStatus.WAITING_FOR_VEHICLE);
+        validDto = new OrderRequestDTO(1L, 2L, List.of(3L));
+        lenient().when(vehicleEntryRepository.findByOrderId_Id(anyLong())).thenReturn(Optional.empty());
+    }
+
+    private static Order copyOrderWithId(Order o, Long id) {
+        return new Order(
+                id,
+                o.getOrderDate(),
+                o.getTotalPrice(),
+                o.getStatus(),
+                o.getUserId(),
+                o.getClientId(),
+                o.getCarId(),
+                o.getAccessories(),
+                o.isVehicleArrived(),
+                o.isAccessoriesConfirmed(),
+                o.isInstallationCompleted());
     }
 
     @Test
@@ -86,23 +108,12 @@ class OrderServiceImplTest {
             when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
             when(carRepository.findById(2L)).thenReturn(Optional.of(car));
             when(accessoryRepository.findAllById(List.of(3L))).thenReturn(List.of(accessory));
-            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
-                Order o = inv.getArgument(0);
-                return new Order(
-                        100L,
-                        o.getOrderDate(),
-                        o.getTotalPrice(),
-                        o.getStatus(),
-                        o.getUserId(),
-                        o.getClientId(),
-                        o.getCarId(),
-                        o.getAccessories());
-            });
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> copyOrderWithId(inv.getArgument(0), 100L));
 
             OrderResponseDTO result = orderService.createOrder(validDto);
 
             assertEquals(100L, result.getId());
-            assertEquals(OrderStatus.WAITING_FOR_VEHICLE, result.getStatus());
+            assertEquals(OrderStatus.WAITING_VEHICLE, result.getStatus());
             assertEquals(0, new BigDecimal("50.00").compareTo(result.getTotalPrice()));
             verify(orderRepository).save(any(Order.class));
         }
@@ -112,24 +123,13 @@ class OrderServiceImplTest {
     @DisplayName("createOrder: totalPrice é soma dos acessórios selecionados")
     void createOrder_totalSumOfAccessories() {
         Accessory second = new Accessory(4L, "Moldura", "Chrome", new BigDecimal("25.50"), car);
-        OrderRequestDTO dto = new OrderRequestDTO(1L, 2L, List.of(3L, 4L), OrderStatus.WAITING_FOR_VEHICLE);
+        OrderRequestDTO dto = new OrderRequestDTO(1L, 2L, List.of(3L, 4L));
         try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.ADMIN_EMAIL)) {
             when(userRepository.findByEmail(TestFixtures.ADMIN_EMAIL)).thenReturn(Optional.of(seller));
             when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
             when(carRepository.findById(2L)).thenReturn(Optional.of(car));
             when(accessoryRepository.findAllById(List.of(3L, 4L))).thenReturn(List.of(accessory, second));
-            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
-                Order o = inv.getArgument(0);
-                return new Order(
-                        200L,
-                        o.getOrderDate(),
-                        o.getTotalPrice(),
-                        o.getStatus(),
-                        o.getUserId(),
-                        o.getClientId(),
-                        o.getCarId(),
-                        o.getAccessories());
-            });
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> copyOrderWithId(inv.getArgument(0), 200L));
 
             OrderResponseDTO result = orderService.createOrder(dto);
 
@@ -161,7 +161,7 @@ class OrderServiceImplTest {
             when(carRepository.findById(99L)).thenReturn(Optional.of(otherCar));
             when(accessoryRepository.findAllById(List.of(3L))).thenReturn(List.of(accessory));
 
-            OrderRequestDTO dto = new OrderRequestDTO(1L, 99L, List.of(3L), OrderStatus.WAITING_FOR_VEHICLE);
+            OrderRequestDTO dto = new OrderRequestDTO(1L, 99L, List.of(3L));
 
             BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> orderService.createOrder(dto));
             assertEquals(ErrorCode.ORDER_ACCESSORY_CAR_MISMATCH, ex.getErrorCode());
@@ -177,7 +177,7 @@ class OrderServiceImplTest {
             when(carRepository.findById(2L)).thenReturn(Optional.of(car));
             when(accessoryRepository.findAllById(List.of(3L, 999L))).thenReturn(List.of(accessory));
 
-            OrderRequestDTO dto = new OrderRequestDTO(1L, 2L, List.of(3L, 999L), OrderStatus.WAITING_FOR_VEHICLE);
+            OrderRequestDTO dto = new OrderRequestDTO(1L, 2L, List.of(3L, 999L));
 
             ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class, () -> orderService.createOrder(dto));
             assertEquals(ErrorCode.ACCESSORY_NOT_FOUND, ex.getErrorCode());
@@ -193,18 +193,7 @@ class OrderServiceImplTest {
             when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
             when(carRepository.findById(2L)).thenReturn(Optional.of(car));
             when(accessoryRepository.findAllById(List.of(3L))).thenReturn(List.of(accessory));
-            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
-                Order o = inv.getArgument(0);
-                return new Order(
-                        100L,
-                        o.getOrderDate(),
-                        o.getTotalPrice(),
-                        o.getStatus(),
-                        o.getUserId(),
-                        o.getClientId(),
-                        o.getCarId(),
-                        o.getAccessories());
-            });
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> copyOrderWithId(inv.getArgument(0), 100L));
 
             OrderResponseDTO result = orderService.createOrder(validDto);
 
