@@ -13,6 +13,7 @@ import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.dto.OrderResponseDTO;
+import com.gustavobatista.autoconfig.dto.VehicleEntrySummaryDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntryRequestDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntryResponseDTO;
 import com.gustavobatista.autoconfig.entity.Accessory;
@@ -147,18 +148,36 @@ public class VehicleServiceImpl implements VehicleService {
     private OrderResponseDTO toOrderResponse(Order order) {
         var seller = order.getUserId();
         Long sellerId = seller == null ? null : seller.getId();
+        VehicleEntrySummaryDTO vehicleSummary = null;
+        if (order.getId() != null) {
+            vehicleSummary = vehicleEntryRepository.findByOrderId_Id(order.getId())
+                    .map(this::toVehicleEntrySummary)
+                    .orElse(null);
+        }
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
                 order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
+                order.isVehicleArrived(),
+                order.isAccessoriesConfirmed(),
+                order.isInstallationCompleted(),
                 sellerId,
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
                 order.getAccessories() == null
                         ? List.of()
-                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList());
+                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList(),
+                vehicleSummary);
+    }
+
+    private VehicleEntrySummaryDTO toVehicleEntrySummary(VehicleEntry entry) {
+        return new VehicleEntrySummaryDTO(
+                entry.getId(),
+                entry.getChassis(),
+                entry.getArrivalDate(),
+                entry.getCondition());
     }
 
     private ClientResponseDTO toClientResponse(Client client) {

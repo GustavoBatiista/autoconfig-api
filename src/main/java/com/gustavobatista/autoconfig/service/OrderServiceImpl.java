@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,15 +22,20 @@ import org.springframework.data.domain.Pageable;
 import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
+import com.gustavobatista.autoconfig.dto.ConfirmVehicleDTO;
 import com.gustavobatista.autoconfig.dto.OrderRequestDTO;
 import com.gustavobatista.autoconfig.dto.OrderResponseDTO;
+import com.gustavobatista.autoconfig.dto.VehicleEntrySummaryDTO;
 import com.gustavobatista.autoconfig.entity.Accessory;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.entity.Order;
 import com.gustavobatista.autoconfig.entity.User;
+import com.gustavobatista.autoconfig.entity.VehicleEntry;
+import com.gustavobatista.autoconfig.enums.OrderStatus;
 import com.gustavobatista.autoconfig.enums.Role;
 import com.gustavobatista.autoconfig.exception.BusinessRuleException;
+import com.gustavobatista.autoconfig.exception.ConflictException;
 import com.gustavobatista.autoconfig.exception.ErrorCode;
 import com.gustavobatista.autoconfig.exception.ForbiddenOperationException;
 import com.gustavobatista.autoconfig.exception.ResourceNotFoundException;
@@ -39,6 +45,7 @@ import com.gustavobatista.autoconfig.repository.CarRepository;
 import com.gustavobatista.autoconfig.repository.ClientRepository;
 import com.gustavobatista.autoconfig.repository.OrderRepository;
 import com.gustavobatista.autoconfig.repository.UserRepository;
+import com.gustavobatista.autoconfig.repository.VehicleEntryRepository;
 
 @Service
 @Transactional
@@ -51,18 +58,21 @@ public class OrderServiceImpl implements OrderService {
     private final ClientRepository clientRepository;
     private final CarRepository carRepository;
     private final AccessoryRepository accessoryRepository;
+    private final VehicleEntryRepository vehicleEntryRepository;
 
     public OrderServiceImpl(
             OrderRepository orderRepository,
             UserRepository userRepository,
             ClientRepository clientRepository,
             CarRepository carRepository,
-            AccessoryRepository accessoryRepository) {
+            AccessoryRepository accessoryRepository,
+            VehicleEntryRepository vehicleEntryRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.clientRepository = clientRepository;
         this.carRepository = carRepository;
         this.accessoryRepository = accessoryRepository;
+        this.vehicleEntryRepository = vehicleEntryRepository;
     }
 
     @Override
@@ -82,11 +92,15 @@ public class OrderServiceImpl implements OrderService {
                 null,
                 LocalDateTime.now(),
                 totalPrice,
-                dto.getStatus(),
+                OrderStatus.WAITING_VEHICLE,
                 seller,
                 client,
                 car,
-                accessories);
+                accessories,
+                false,
+                false,
+                false);
+        updateStatus(order);
 
         Order saved = orderRepository.save(order);
         log.info("Order created: id={}", saved.getId());
@@ -112,10 +126,10 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal totalPrice = sumAccessoryPrices(accessories);
 
         order.setTotalPrice(totalPrice);
-        order.setStatus(dto.getStatus());
         order.setClientId(client);
         order.setCarId(car);
         order.setAccessories(accessories);
+        updateStatus(order);
 
         Order saved = orderRepository.save(order);
         log.info("Order updated: id={}", saved.getId());
@@ -155,9 +169,90 @@ public class OrderServiceImpl implements OrderService {
         return toResponse(order);
     }
 
-    /**
-     * Loads accessories by id (deduplicated, order preserved), ensures all exist and belong to {@code car}.
-     */
+    @Override
+    public OrderResponseDTO confirmVehicle(Long orderId, ConfirmVehicleDTO dto) {
+        assertAuthenticated();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + orderId));
+
+        assertCanConfirmVehicle(order);
+
+        String chassis = trim(dto.getChassis());
+        Optional<VehicleEntry> existingOpt = vehicleEntryRepository.findByOrderId_Id(orderId);
+        Long excludeId = existingOpt.map(VehicleEntry::getId).orElse(null);
+        assertUniqueChassisForConfirm(chassis, excludeId);
+
+        VehicleEntry entry = existingOpt.orElseGet(VehicleEntry::new);
+        entry.setOrderId(order);
+        entry.setChassis(chassis);
+        entry.setArrivalDate(dto.getArrivalDate());
+        entry.setCondition(dto.getCondition());
+        vehicleEntryRepository.save(entry);
+
+        order.setVehicleArrived(true);
+        updateStatus(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order vehicle confirmed: id={}", orderId);
+        return toResponse(saved);
+    }
+
+    @Override
+    public OrderResponseDTO confirmAccessories(Long orderId) {
+        assertAuthenticated();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + orderId));
+
+        assertCanConfirmAccessories(order);
+
+        if (!order.isVehicleArrived()) {
+            throw new BusinessRuleException(
+                    ErrorCode.ORDER_CONFIRMATION_SEQUENCE,
+                    "Vehicle must be confirmed before accessories");
+        }
+
+        order.setAccessoriesConfirmed(true);
+        updateStatus(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order accessories confirmed: id={}", orderId);
+        return toResponse(saved);
+    }
+
+    @Override
+    public OrderResponseDTO confirmInstallation(Long orderId) {
+        assertAuthenticated();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + orderId));
+
+        assertCanMutateOrder(order);
+
+        if (!order.isVehicleArrived() || !order.isAccessoriesConfirmed()) {
+            throw new BusinessRuleException(
+                    ErrorCode.ORDER_CONFIRMATION_SEQUENCE,
+                    "Vehicle and accessories must be confirmed before installation");
+        }
+
+        order.setInstallationCompleted(true);
+        updateStatus(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order installation confirmed: id={}", orderId);
+        return toResponse(saved);
+    }
+
+    private void updateStatus(Order order) {
+        if (!order.isVehicleArrived()) {
+            order.setStatus(OrderStatus.WAITING_VEHICLE);
+        } else if (!order.isAccessoriesConfirmed()) {
+            order.setStatus(OrderStatus.WAITING_ACCESSORIES);
+        } else if (!order.isInstallationCompleted()) {
+            order.setStatus(OrderStatus.WAITING_SCHEDULING);
+        } else {
+            order.setStatus(OrderStatus.READY_FOR_DELIVERY);
+        }
+    }
+
     private List<Accessory> loadAccessoriesForCar(List<Long> requestedIds, Car car) {
         List<Long> distinctOrdered = new ArrayList<>(new LinkedHashSet<>(requestedIds));
 
@@ -199,18 +294,36 @@ public class OrderServiceImpl implements OrderService {
     private OrderResponseDTO toResponse(Order order) {
         User seller = order.getUserId();
         Long sellerId = seller == null ? null : seller.getId();
+        VehicleEntrySummaryDTO vehicleSummary = null;
+        if (order.getId() != null) {
+            vehicleSummary = vehicleEntryRepository.findByOrderId_Id(order.getId())
+                    .map(this::toVehicleEntrySummary)
+                    .orElse(null);
+        }
         return new OrderResponseDTO(
                 order.getId(),
                 order.getOrderDate(),
                 order.getCreatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
+                order.isVehicleArrived(),
+                order.isAccessoriesConfirmed(),
+                order.isInstallationCompleted(),
                 sellerId,
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
                 order.getAccessories() == null
                         ? List.of()
-                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList());
+                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList(),
+                vehicleSummary);
+    }
+
+    private VehicleEntrySummaryDTO toVehicleEntrySummary(VehicleEntry entry) {
+        return new VehicleEntrySummaryDTO(
+                entry.getId(),
+                entry.getChassis(),
+                entry.getArrivalDate(),
+                entry.getCondition());
     }
 
     private void assertCanMutateOrder(Order order) {
@@ -231,6 +344,54 @@ public class OrderServiceImpl implements OrderService {
         throw new ForbiddenOperationException(
                 ErrorCode.ORDER_MUTATION_FORBIDDEN,
                 "Not allowed to modify orders");
+    }
+
+    private void assertCanConfirmVehicle(Order order) {
+        User current = getCurrentUserOrThrow();
+        Role role = current.getRole();
+        if (role == Role.ROLE_ADMIN || role == Role.ROLE_MANAGER || role == Role.ROLE_VEHICLE_STOCK) {
+            return;
+        }
+        if (role == Role.ROLE_SELLER) {
+            User owner = order.getUserId();
+            if (owner != null && owner.getId().equals(current.getId())) {
+                return;
+            }
+        }
+        throw new ForbiddenOperationException(
+                ErrorCode.ORDER_MUTATION_FORBIDDEN,
+                "Not allowed to confirm vehicle for this order");
+    }
+
+    private void assertCanConfirmAccessories(Order order) {
+        User current = getCurrentUserOrThrow();
+        Role role = current.getRole();
+        if (role == Role.ROLE_ADMIN || role == Role.ROLE_MANAGER || role == Role.ROLE_ACCESSORY_STOCK) {
+            return;
+        }
+        if (role == Role.ROLE_SELLER) {
+            User owner = order.getUserId();
+            if (owner != null && owner.getId().equals(current.getId())) {
+                return;
+            }
+        }
+        throw new ForbiddenOperationException(
+                ErrorCode.ORDER_MUTATION_FORBIDDEN,
+                "Not allowed to confirm accessories for this order");
+    }
+
+    private void assertUniqueChassisForConfirm(String chassis, Long excludeVehicleEntryId) {
+        if (excludeVehicleEntryId == null) {
+            if (vehicleEntryRepository.existsByChassisIgnoreCase(chassis)) {
+                throw new ConflictException(ErrorCode.VEHICLE_CHASSIS_CONFLICT, "A vehicle entry with this chassis already exists");
+            }
+        } else if (vehicleEntryRepository.existsByChassisIgnoreCaseAndIdNot(chassis, excludeVehicleEntryId)) {
+            throw new ConflictException(ErrorCode.VEHICLE_CHASSIS_CONFLICT, "A vehicle entry with this chassis already exists");
+        }
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
     }
 
     private ClientResponseDTO toClientResponse(Client client) {

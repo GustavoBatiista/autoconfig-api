@@ -73,6 +73,12 @@ public class SecurityConfig {
                                                 .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
 
                                                 // ---- ORDERS
+                                                .requestMatchers(HttpMethod.PATCH, "/orders/*/confirm-vehicle")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_VEHICLE_STOCK, AUTH_SELLER)
+                                                .requestMatchers(HttpMethod.PATCH, "/orders/*/confirm-accessories")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_ACCESSORY_STOCK, AUTH_SELLER)
+                                                .requestMatchers(HttpMethod.PATCH, "/orders/*/confirm-installation")
+                                                .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER)
                                                 .requestMatchers(HttpMethod.GET, "/orders", "/orders/**")
                                                 .hasAnyAuthority(AUTH_ADMIN, AUTH_MANAGER, AUTH_SELLER,
                                                                 AUTH_VEHICLE_STOCK, AUTH_ACCESSORY_STOCK)
