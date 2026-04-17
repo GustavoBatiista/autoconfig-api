@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchMe, logout, type MeResponse } from '../api/authApi'
+import { AppBrand } from '../components/AppBrand'
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -33,7 +34,7 @@ export function HomePage() {
   return (
     <div className="shell">
       <header className="shell-header">
-        <h1>Autoconfig</h1>
+        <AppBrand className="dash-brand--large dash-brand--light" />
         <button type="button" className="btn-secondary" onClick={handleLogout}>
           Sair
         </button>

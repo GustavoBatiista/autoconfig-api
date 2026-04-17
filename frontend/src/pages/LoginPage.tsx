@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/authApi'
+import { AppBrand } from '../components/AppBrand'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -26,7 +27,9 @@ export function LoginPage() {
 
   return (
     <div className="auth">
-      <h1>Autoconfig</h1>
+      <div className="auth-brand">
+        <AppBrand className="dash-brand--large dash-brand--light" />
+      </div>
       <p className="auth-lead">Entre com o mesmo email e senha da API.</p>
 
       <form className="auth-form" onSubmit={onSubmit}>
