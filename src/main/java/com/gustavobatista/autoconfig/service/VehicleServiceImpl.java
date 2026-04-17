@@ -158,18 +158,30 @@ public class VehicleServiceImpl implements VehicleService {
                 order.getId(),
                 order.getOrderDate(),
                 order.getCreatedAt(),
+                order.getUpdatedAt(),
                 order.getTotalPrice(),
                 order.getStatus(),
                 order.isVehicleArrived(),
                 order.isAccessoriesConfirmed(),
                 order.isInstallationCompleted(),
                 sellerId,
+                sellerDisplayName(seller),
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
                 order.getAccessories() == null
                         ? List.of()
                         : order.getAccessories().stream().map(this::toAccessoryResponse).toList(),
                 vehicleSummary);
+    }
+
+    private static String sellerDisplayName(User seller) {
+        if (seller == null) {
+            return null;
+        }
+        String first = seller.getName() == null ? "" : seller.getName().trim();
+        String last = seller.getLastName() == null ? "" : seller.getLastName().trim();
+        String combined = (first + " " + last).trim();
+        return combined.isEmpty() ? null : combined;
     }
 
     private VehicleEntrySummaryDTO toVehicleEntrySummary(VehicleEntry entry) {

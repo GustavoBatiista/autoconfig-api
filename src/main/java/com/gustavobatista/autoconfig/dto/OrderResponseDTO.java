@@ -11,30 +11,36 @@ public class OrderResponseDTO {
     private final Long id;
     private final LocalDateTime orderDate;
     private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
     private final BigDecimal totalPrice;
     private final OrderStatus status;
     private final boolean vehicleArrived;
     private final boolean accessoriesConfirmed;
     private final boolean installationCompleted;
     private final Long sellerId;
+    private final String sellerName;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
     private final List<AccessoryResponseDTO> accessories;
     private final VehicleEntrySummaryDTO vehicleEntry;
 
-    public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, BigDecimal totalPrice,
+    public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, LocalDateTime updatedAt,
+            BigDecimal totalPrice,
             OrderStatus status, boolean vehicleArrived, boolean accessoriesConfirmed, boolean installationCompleted,
-            Long sellerId, ClientResponseDTO client, CarResponseDTO car, List<AccessoryResponseDTO> accessories,
+            Long sellerId, String sellerName, ClientResponseDTO client, CarResponseDTO car,
+            List<AccessoryResponseDTO> accessories,
             VehicleEntrySummaryDTO vehicleEntry) {
         this.id = id;
         this.orderDate = orderDate;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.totalPrice = totalPrice;
         this.status = status;
         this.vehicleArrived = vehicleArrived;
         this.accessoriesConfirmed = accessoriesConfirmed;
         this.installationCompleted = installationCompleted;
         this.sellerId = sellerId;
+        this.sellerName = sellerName;
         this.client = client;
         this.car = car;
         this.accessories = accessories;
@@ -51,6 +57,10 @@ public class OrderResponseDTO {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public BigDecimal getTotalPrice() {
@@ -75,6 +85,10 @@ public class OrderResponseDTO {
 
     public Long getSellerId() {
         return sellerId;
+    }
+
+    public String getSellerName() {
+        return sellerName;
     }
 
     public ClientResponseDTO getClient() {
