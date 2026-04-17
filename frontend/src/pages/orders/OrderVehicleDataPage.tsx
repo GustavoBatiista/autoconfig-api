@@ -21,12 +21,22 @@ function accessoriesSummary(order: OrderResponse): string {
   return order.accessories.map((a) => a.name).join(', ')
 }
 
+function isoToDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function normalizeCondition(value: string): string {
+  return VEHICLE_CONDITION_OPTIONS.some((o) => o.value === value) ? value : VEHICLE_CONDITION_OPTIONS[0].value
+}
+
 export function OrderVehicleDataPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const idFromQuery = searchParams.get('id')
 
-  const [idInput, setIdInput] = useState(() => idFromQuery ?? '')
   const [order, setOrder] = useState<OrderResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
@@ -41,7 +51,6 @@ export function OrderVehicleDataPage() {
     try {
       const o = await fetchOrderById(id)
       setOrder(o)
-      setIdInput(String(id))
     } catch (err) {
       setOrder(null)
       setError(err instanceof Error ? err.message : 'Erro ao carregar pedido')
@@ -50,21 +59,46 @@ export function OrderVehicleDataPage() {
     }
   }, [])
 
-  async function onLoadById() {
-    const id = parseEntityId(idInput)
-    if (id == null) {
-      setError('Informe um ID valido.')
+  useEffect(() => {
+    if (!idFromQuery) {
+      setOrder(null)
+      setError('Nenhum pedido selecionado.')
       return
     }
-    await loadOrderByParsedId(id)
-  }
-
-  useEffect(() => {
-    if (!idFromQuery) return
     const id = parseEntityId(idFromQuery)
-    if (id == null) return
+    if (id == null) {
+      setOrder(null)
+      setError('ID do pedido invalido.')
+      return
+    }
+    setOrder(null)
     void loadOrderByParsedId(id)
   }, [idFromQuery, loadOrderByParsedId])
+
+  useEffect(() => {
+    if (order == null) {
+      setChassis('')
+      setArrivalDate('')
+      setCondition(VEHICLE_CONDITION_OPTIONS[0].value)
+      return
+    }
+    if (order.vehicleArrived) {
+      setChassis('')
+      setArrivalDate('')
+      setCondition(VEHICLE_CONDITION_OPTIONS[0].value)
+      return
+    }
+    const ve = order.vehicleEntry
+    if (ve != null) {
+      setChassis(ve.chassis)
+      setArrivalDate(isoToDatetimeLocalValue(ve.arrivalDate))
+      setCondition(normalizeCondition(ve.condition))
+    } else {
+      setChassis('')
+      setArrivalDate('')
+      setCondition(VEHICLE_CONDITION_OPTIONS[0].value)
+    }
+  }, [order])
 
   function goBack() {
     navigate('..')
@@ -132,27 +166,8 @@ export function OrderVehicleDataPage() {
     <div>
       <h2 className="dash-page__heading">Incluir dados do veículo</h2>
 
+      {loadingOrder ? <p className="dash-muted">Carregando...</p> : null}
       {error ? <p className="dash-error">{error}</p> : null}
-
-      <div className="dash-user-form dash-form-id-block">
-        <div className="dash-user-form__grid dash-form-id-row">
-          <label>
-            ID do pedido
-            <input
-              value={idInput}
-              onChange={(e) => setIdInput(e.target.value)}
-              inputMode="numeric"
-              placeholder="Ex.: 12"
-              disabled={loadingOrder || saving}
-            />
-          </label>
-        </div>
-        <div className="dash-form-actions">
-          <button type="button" className="dash-btn-secondary" onClick={onLoadById} disabled={loadingOrder || saving}>
-            {loadingOrder ? 'Carregando...' : 'Carregar'}
-          </button>
-        </div>
-      </div>
 
       {order != null && order.vehicleArrived ? (
         <div className="dash-user-form">

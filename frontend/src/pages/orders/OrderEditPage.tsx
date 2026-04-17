@@ -97,7 +97,13 @@ export function OrderEditPage() {
   useEffect(() => {
     if (!idFromQuery) return
     const id = parseEntityId(idFromQuery)
-    if (id == null) return
+    if (id == null) {
+      setLoadedId(null)
+      setLoadedStatus(null)
+      setError('ID do pedido invalido.')
+      return
+    }
+    setError(null)
     void loadOrderByParsedId(id)
   }, [idFromQuery, loadOrderByParsedId])
 
@@ -186,26 +192,29 @@ export function OrderEditPage() {
 
       {listsError ? <p className="dash-error">{listsError}</p> : null}
       {error ? <p className="dash-error">{error}</p> : null}
+      {idFromQuery && loadingOrder ? <p className="dash-muted">Carregando...</p> : null}
 
-      <div className="dash-user-form dash-form-id-block">
-        <div className="dash-user-form__grid dash-form-id-row">
-          <label>
-            ID do pedido
-            <input
-              value={idInput}
-              onChange={(e) => setIdInput(e.target.value)}
-              inputMode="numeric"
-              placeholder="Ex.: 12"
-              disabled={loadingOrder || saving}
-            />
-          </label>
+      {!idFromQuery ? (
+        <div className="dash-user-form dash-form-id-block">
+          <div className="dash-user-form__grid dash-form-id-row">
+            <label>
+              ID do pedido
+              <input
+                value={idInput}
+                onChange={(e) => setIdInput(e.target.value)}
+                inputMode="numeric"
+                placeholder="Ex.: 12"
+                disabled={loadingOrder || saving}
+              />
+            </label>
+          </div>
+          <div className="dash-form-actions">
+            <button type="button" className="dash-btn-secondary" onClick={onLoadById} disabled={loadingOrder || saving}>
+              {loadingOrder ? 'Carregando...' : 'Carregar'}
+            </button>
+          </div>
         </div>
-        <div className="dash-form-actions">
-          <button type="button" className="dash-btn-secondary" onClick={onLoadById} disabled={loadingOrder || saving}>
-            {loadingOrder ? 'Carregando...' : 'Carregar'}
-          </button>
-        </div>
-      </div>
+      ) : null}
 
       <form className="dash-user-form" onSubmit={onSubmit}>
         <div className="dash-user-form__grid">

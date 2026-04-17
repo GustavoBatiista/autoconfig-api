@@ -27,3 +27,17 @@ export function canConfirmVehicleInUi(me: MeResponse, order: OrderResponse): boo
   if (me.role === 'ROLE_SELLER') return order.sellerId === me.id
   return true
 }
+
+const CONFIRM_ACCESSORIES_ROLES = new Set([
+  'ROLE_ADMIN',
+  'ROLE_MANAGER',
+  'ROLE_ACCESSORY_STOCK',
+  'ROLE_SELLER',
+])
+
+export function canConfirmAccessoriesInUi(me: MeResponse, order: OrderResponse): boolean {
+  if (!CONFIRM_ACCESSORIES_ROLES.has(me.role)) return false
+  if (order.accessoriesConfirmed) return false
+  if (me.role === 'ROLE_SELLER') return order.sellerId === me.id
+  return true
+}
