@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchMe, type MeResponse } from '../../api/authApi'
-import { fetchOrdersPage, type OrderAccessoryDto, type OrderResponse } from '../../api/ordersApi'
+import { fetchOrdersPage, type OrderResponse } from '../../api/ordersApi'
 import { DashListHeader } from '../../components/dashboard/DashListHeader'
-import { canConfirmVehicleInUi, canMutateOrderInUi } from '../../domain/orderPermissions'
 import {
   orderStatusBadgeClass,
   orderStatusBucket,
@@ -11,19 +9,6 @@ import {
 } from '../../domain/orderStatus'
 
 const STATS_PAGE_SIZE = 500
-
-function formatCreatedAt(iso: string | null | undefined, fallbackIso: string): string {
-  const raw = iso ?? fallbackIso
-  const d = new Date(raw)
-  if (Number.isNaN(d.getTime())) return raw
-  return d.toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 function vehicleLabel(car: OrderResponse['car']): string {
   const v = car.version?.trim()
@@ -34,31 +19,11 @@ function clientLabel(c: OrderResponse['client']): string {
   return `${c.name} ${c.lastName}`.trim()
 }
 
-function accessoriesSummary(items: OrderAccessoryDto[]): string {
-  if (!items.length) return '—'
-  return items.map((a) => a.name).join(', ')
-}
-
 export function OrdersPage() {
   const navigate = useNavigate()
-  const [me, setMe] = useState<MeResponse | null>(null)
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    void fetchMe()
-      .then((m) => {
-        if (!cancelled) setMe(m)
-      })
-      .catch(() => {
-        if (!cancelled) setMe(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -162,51 +127,10 @@ export function OrdersPage() {
                 <span className="dash-order-card__label">Veículo</span>
                 <span className="dash-order-card__value">{vehicleLabel(o.car)}</span>
               </div>
-              <div className="dash-order-card__row">
-                <span className="dash-order-card__label">Acessórios</span>
-                <span className="dash-order-card__value">{accessoriesSummary(o.accessories)}</span>
-              </div>
               <div className="dash-order-card__row dash-order-card__row--status">
                 <span className="dash-order-card__label">Status</span>
                 <span className={orderStatusBadgeClass(o.status)}>{orderStatusShortLabelPt(o.status)}</span>
               </div>
-              <div className="dash-order-card__row">
-                <span className="dash-order-card__label">Criado em</span>
-                <time className="dash-order-card__value" dateTime={o.createdAt ?? o.orderDate}>
-                  {formatCreatedAt(o.createdAt, o.orderDate)}
-                </time>
-              </div>
-              {me && (canConfirmVehicleInUi(me, o) || canMutateOrderInUi(me, o)) ? (
-                <div className="dash-order-card__actions" onClick={(e) => e.stopPropagation()}>
-                  {canConfirmVehicleInUi(me, o) ? (
-                    <button
-                      type="button"
-                      className="dash-btn-secondary"
-                      onClick={() => navigate({ pathname: 'orders/vehicle-data', search: `?id=${o.id}` })}
-                    >
-                      Incluir dados
-                    </button>
-                  ) : null}
-                  {canMutateOrderInUi(me, o) ? (
-                    <>
-                      <button
-                        type="button"
-                        className="dash-btn-secondary"
-                        onClick={() => navigate({ pathname: 'orders/edit', search: `?id=${o.id}` })}
-                      >
-                        Alterar
-                      </button>
-                      <button
-                        type="button"
-                        className="dash-btn-danger"
-                        onClick={() => navigate({ pathname: 'orders/delete', search: `?id=${o.id}` })}
-                      >
-                        Excluir
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
             </article>
           ))
         )}
