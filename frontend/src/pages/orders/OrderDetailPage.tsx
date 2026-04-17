@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { fetchOrderById, type OrderResponse } from '../../api/ordersApi'
+import { fetchMe, type MeResponse } from '../../api/authApi'
+import { confirmOrderAccessories, deleteOrder, fetchOrderById, type OrderResponse } from '../../api/ordersApi'
+import { canConfirmAccessoriesInUi, canConfirmVehicleInUi, canMutateOrderInUi } from '../../domain/orderPermissions'
 import { orderStatusLabelPt } from '../../domain/orderStatus'
 import { vehicleConditionLabelPt } from '../../domain/vehicleCondition'
 import { parseEntityId } from '../../utils/parseEntityId'
@@ -29,15 +31,37 @@ function formatDateTime(iso: string | null | undefined, fallbackIso: string): st
   })
 }
 
+function sellerLabel(order: OrderResponse): string {
+  const name = order.sellerName?.trim()
+  if (name) return name
+  return String(order.sellerId)
+}
+
 export function OrderDetailPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const idFromQuery = searchParams.get('id')
 
-  const [idInput, setIdInput] = useState(() => idFromQuery ?? '')
+  const [me, setMe] = useState<MeResponse | null>(null)
   const [order, setOrder] = useState<OrderResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmingAccessories, setConfirmingAccessories] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchMe()
+      .then((m) => {
+        if (!cancelled) setMe(m)
+      })
+      .catch(() => {
+        if (!cancelled) setMe(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const loadOrderByParsedId = useCallback(async (id: number) => {
     setError(null)
@@ -45,7 +69,6 @@ export function OrderDetailPage() {
     try {
       const o = await fetchOrderById(id)
       setOrder(o)
-      setIdInput(String(id))
     } catch (err) {
       setOrder(null)
       setError(err instanceof Error ? err.message : 'Erro ao carregar pedido')
@@ -54,59 +77,109 @@ export function OrderDetailPage() {
     }
   }, [])
 
-  async function onLoadById() {
-    const id = parseEntityId(idInput)
-    if (id == null) {
-      setError('Informe um ID valido.')
+  useEffect(() => {
+    if (!idFromQuery) {
+      setOrder(null)
+      setError('Nenhum pedido selecionado.')
       return
     }
-    await loadOrderByParsedId(id)
-  }
-
-  useEffect(() => {
-    if (!idFromQuery) return
     const id = parseEntityId(idFromQuery)
-    if (id == null) return
+    if (id == null) {
+      setOrder(null)
+      setError('ID do pedido invalido.')
+      return
+    }
+    setOrder(null)
     void loadOrderByParsedId(id)
   }, [idFromQuery, loadOrderByParsedId])
 
-  function goBack() {
-    navigate('..')
+  const ve = order?.vehicleEntry
+
+  async function onConfirmAccessories() {
+    if (order == null || confirmingAccessories || !order.vehicleArrived) return
+    setError(null)
+    setConfirmingAccessories(true)
+    try {
+      const updated = await confirmOrderAccessories(order.id)
+      setOrder(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar acessorios')
+    } finally {
+      setConfirmingAccessories(false)
+    }
   }
 
-  const ve = order?.vehicleEntry
+  async function onDeleteOrder() {
+    if (order == null || deleting) return
+    if (!window.confirm('Excluir este pedido permanentemente?')) return
+    setError(null)
+    setDeleting(true)
+    try {
+      await deleteOrder(order.id)
+      navigate('..')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir pedido')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div>
       <h2 className="dash-page__heading">Detalhe do pedido</h2>
 
+      {loadingOrder ? <p className="dash-muted">Carregando...</p> : null}
       {error ? <p className="dash-error">{error}</p> : null}
-
-      <div className="dash-user-form dash-form-id-block">
-        <div className="dash-user-form__grid dash-form-id-row">
-          <label>
-            ID do pedido
-            <input
-              value={idInput}
-              onChange={(e) => setIdInput(e.target.value)}
-              inputMode="numeric"
-              placeholder="Ex.: 12"
-              disabled={loadingOrder}
-            />
-          </label>
-        </div>
-        <div className="dash-form-actions">
-          <button type="button" className="dash-btn-secondary" onClick={onLoadById} disabled={loadingOrder}>
-            {loadingOrder ? 'Carregando...' : 'Carregar'}
-          </button>
-          <button type="button" className="dash-btn-secondary" onClick={goBack}>
-            Voltar
-          </button>
-        </div>
-      </div>
 
       {order != null ? (
         <div className="dash-user-form">
+          {me &&
+          (canConfirmVehicleInUi(me, order) ||
+            canConfirmAccessoriesInUi(me, order) ||
+            canMutateOrderInUi(me, order)) ? (
+            <div className="dash-form-actions">
+              {canConfirmVehicleInUi(me, order) ? (
+                <button
+                  type="button"
+                  className="dash-btn-secondary"
+                  onClick={() => navigate({ pathname: '../vehicle-data', search: `?id=${order.id}` }, { relative: 'path' })}
+                  disabled={deleting || confirmingAccessories}
+                >
+                  Incluir dados
+                </button>
+              ) : null}
+              {canConfirmAccessoriesInUi(me, order) ? (
+                <button
+                  type="button"
+                  className="dash-btn-secondary"
+                  onClick={onConfirmAccessories}
+                  disabled={!order.vehicleArrived || deleting || confirmingAccessories}
+                >
+                  {confirmingAccessories ? 'Confirmando...' : 'Confirmar acessórios'}
+                </button>
+              ) : null}
+              {canMutateOrderInUi(me, order) ? (
+                <>
+                  <button
+                    type="button"
+                    className="dash-btn-secondary"
+                    onClick={() => navigate({ pathname: '../edit', search: `?id=${order.id}` }, { relative: 'path' })}
+                    disabled={deleting || confirmingAccessories}
+                  >
+                    Alterar
+                  </button>
+                  <button
+                    type="button"
+                    className="dash-btn-danger"
+                    onClick={onDeleteOrder}
+                    disabled={deleting || confirmingAccessories}
+                  >
+                    {deleting ? 'Excluindo...' : 'Excluir'}
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
           <div className="dash-user-form__grid">
             <label>
               Cliente
@@ -129,17 +202,17 @@ export function OrderDetailPage() {
               <input type="text" readOnly className="dash-input-readonly" value={formatDateTime(null, order.orderDate)} />
             </label>
             <label>
-              Criado em
+              Última atualização
               <input
                 type="text"
                 readOnly
                 className="dash-input-readonly"
-                value={formatDateTime(order.createdAt, order.orderDate)}
+                value={formatDateTime(order.updatedAt ?? order.createdAt, order.orderDate)}
               />
             </label>
             <label>
-              Vendedor (id)
-              <input type="text" readOnly className="dash-input-readonly" value={String(order.sellerId)} />
+              Vendedor
+              <input type="text" readOnly className="dash-input-readonly" value={sellerLabel(order)} />
             </label>
             <label>
               Veículo confirmado
@@ -170,13 +243,14 @@ export function OrderDetailPage() {
             {order.accessories.length === 0 ? (
               <p className="dash-muted">Nenhum.</p>
             ) : (
-              <ul className="dash-checkboxes-list">
+              <ul className="dash-accessory-list">
                 {order.accessories.map((a) => (
-                  <li key={a.id}>
-                    <span className="dash-checkbox-row__title">
-                      #{a.id} {a.name}
-                    </span>
-                    <span className="dash-checkbox-row__meta">{moneyBr.format(a.price)}</span>
+                  <li key={a.id} className="dash-accessory-item">
+                    <div className="dash-accessory-item__main">
+                      <span className="dash-accessory-item__id">#{a.id}</span>
+                      <span className="dash-accessory-item__name">{a.name}</span>
+                    </div>
+                    <span className="dash-accessory-item__price">{moneyBr.format(a.price)}</span>
                   </li>
                 ))}
               </ul>
