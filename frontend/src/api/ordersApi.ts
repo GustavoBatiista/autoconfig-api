@@ -35,12 +35,14 @@ export type OrderResponse = {
   id: number
   orderDate: string
   createdAt: string | null
+  updatedAt: string | null
   totalPrice: number
   status: string
   vehicleArrived: boolean
   accessoriesConfirmed: boolean
   installationCompleted: boolean
   sellerId: number
+  sellerName: string | null
   client: ClientDto
   car: CarDto
   accessories: OrderAccessoryDto[]
