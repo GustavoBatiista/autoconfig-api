@@ -17,21 +17,62 @@
   padding: 1.25rem 0.75rem;
   background: rgba(15, 23, 42, 0.85);
   border-right: 1px solid rgba(148, 163, 184, 0.12);
+  display: flex;
+  flex-direction: column;
 }
 
 .dash-sidebar__brand {
+  padding: 0.5rem 0.75rem 1.25rem;
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.dash-brand__mark {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: block;
+  object-fit: contain;
+}
+
+.dash-brand__name {
   font-size: 1.15rem;
   font-weight: 700;
-  font-style: italic;
   letter-spacing: 0.02em;
-  padding: 0.5rem 0.75rem 1.25rem;
   color: #f8fafc;
+}
+
+.dash-brand--large .dash-brand__name {
+  font-size: 1.5rem;
+}
+
+.dash-brand--light .dash-brand__name {
+  color: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dash-brand--light .dash-brand__name {
+    color: #f1f5f9;
+  }
 }
 
 .dash-nav {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.dash-sidebar__footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .dash-nav__link {
@@ -70,19 +111,16 @@
   min-width: 0;
 }
 
-.dash-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-  background: rgba(15, 23, 42, 0.4);
-}
-
 .dash-userbar {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.dash-userbar--sidebar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
 }
 
 .dash-userbar__name {
@@ -539,6 +577,59 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.dash-accessory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dash-accessory-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.dash-accessory-item__main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.dash-accessory-item__id {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #94a3b8;
+}
+
+.dash-accessory-item__name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f1f5f9;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.dash-accessory-item__price {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #bae6fd;
 }
 
 .dash-checkbox-row {

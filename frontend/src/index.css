@@ -58,6 +58,10 @@ h1 {
   padding: 3rem 1.25rem;
 }
 
+.auth-brand {
+  margin: 0 0 0.5rem;
+}
+
 .auth-lead {
   margin: 0 0 1.5rem;
   color: #5c6370;

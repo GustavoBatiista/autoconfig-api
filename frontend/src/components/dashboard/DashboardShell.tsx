@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { AppBrand } from '../AppBrand'
 
 export type DashboardNavItem = {
   to: string
@@ -17,7 +18,9 @@ export function DashboardShell({ navItems, userEmail, onLogout }: DashboardShell
   return (
     <div className="dash-app">
       <aside className="dash-sidebar" aria-label="Navegação principal">
-        <div className="dash-sidebar__brand">AutoConfig</div>
+        <div className="dash-sidebar__brand">
+          <AppBrand />
+        </div>
         <nav className="dash-nav">
           {navItems.map((item) => (
             <NavLink
@@ -33,11 +36,8 @@ export function DashboardShell({ navItems, userEmail, onLogout }: DashboardShell
             </NavLink>
           ))}
         </nav>
-      </aside>
-
-      <div className="dash-column">
-        <header className="dash-topbar">
-          <div className="dash-userbar">
+        <div className="dash-sidebar__footer">
+          <div className="dash-userbar dash-userbar--sidebar">
             <span className="dash-userbar__name" title={userEmail}>
               {userEmail}
             </span>
@@ -45,8 +45,10 @@ export function DashboardShell({ navItems, userEmail, onLogout }: DashboardShell
               Sair
             </button>
           </div>
-        </header>
+        </div>
+      </aside>
 
+      <div className="dash-column">
         <main className="dash-main">
           <Outlet />
         </main>
