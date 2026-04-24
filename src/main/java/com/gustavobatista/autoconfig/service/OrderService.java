@@ -23,5 +23,7 @@ public interface OrderService {
 
     OrderResponseDTO confirmAccessories(Long orderId);
 
+    OrderResponseDTO confirmInspection(Long orderId);
+
     OrderResponseDTO confirmInstallation(Long orderId);
 }

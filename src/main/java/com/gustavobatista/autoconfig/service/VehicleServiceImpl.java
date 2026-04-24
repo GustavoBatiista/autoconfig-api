@@ -9,14 +9,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
+import com.gustavobatista.autoconfig.dto.OrderAccessoryResponseDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.dto.OrderResponseDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntrySummaryDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntryRequestDTO;
 import com.gustavobatista.autoconfig.dto.VehicleEntryResponseDTO;
-import com.gustavobatista.autoconfig.entity.Accessory;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.Client;
 import com.gustavobatista.autoconfig.entity.Order;
@@ -163,14 +162,13 @@ public class VehicleServiceImpl implements VehicleService {
                 order.getStatus(),
                 order.isVehicleArrived(),
                 order.isAccessoriesConfirmed(),
+                order.isInspectionCompleted(),
                 order.isInstallationCompleted(),
                 sellerId,
                 sellerDisplayName(seller),
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
-                order.getAccessories() == null
-                        ? List.of()
-                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList(),
+                order.getOrderAccessories().stream().map(OrderAccessoryResponseDTO::from).toList(),
                 vehicleSummary);
     }
 
@@ -198,17 +196,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     private CarResponseDTO toCarResponse(Car car) {
         return new CarResponseDTO(car.getId(), car.getBrand(), car.getModel(), car.getVersion());
-    }
-
-    private AccessoryResponseDTO toAccessoryResponse(Accessory accessory) {
-        Car car = accessory.getCar();
-        CarResponseDTO carDto = car == null ? null : toCarResponse(car);
-        return new AccessoryResponseDTO(
-                accessory.getId(),
-                accessory.getName(),
-                accessory.getDescription(),
-                accessory.getPrice(),
-                carDto);
     }
 
     private void assertAuthenticated() {

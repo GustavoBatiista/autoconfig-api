@@ -72,6 +72,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmAccessories(id));
     }
 
+    @PatchMapping("/{id}/confirm-inspection")
+    public ResponseEntity<OrderResponseDTO> confirmInspection(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.confirmInspection(id));
+    }
+
     @PatchMapping("/{id}/confirm-installation")
     public ResponseEntity<OrderResponseDTO> confirmInstallation(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.confirmInstallation(id));

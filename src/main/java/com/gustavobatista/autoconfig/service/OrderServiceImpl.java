@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.gustavobatista.autoconfig.dto.AccessoryResponseDTO;
+import com.gustavobatista.autoconfig.dto.OrderAccessoryResponseDTO;
 import com.gustavobatista.autoconfig.dto.CarResponseDTO;
 import com.gustavobatista.autoconfig.dto.ClientResponseDTO;
 import com.gustavobatista.autoconfig.dto.ConfirmVehicleDTO;
@@ -29,6 +29,7 @@ import com.gustavobatista.autoconfig.dto.VehicleEntrySummaryDTO;
 import com.gustavobatista.autoconfig.entity.Accessory;
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.Client;
+import com.gustavobatista.autoconfig.entity.OrderAccessory;
 import com.gustavobatista.autoconfig.entity.Order;
 import com.gustavobatista.autoconfig.entity.User;
 import com.gustavobatista.autoconfig.entity.VehicleEntry;
@@ -86,7 +87,15 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + dto.getCarId()));
 
         List<Accessory> accessories = loadAccessoriesForCar(dto.getAccessoryIds(), car);
-        BigDecimal totalPrice = sumAccessoryPrices(accessories);
+        List<OrderAccessory> lines = new ArrayList<>();
+        for (Accessory a : accessories) {
+            OrderAccessory line = new OrderAccessory();
+            line.setAccessory(a);
+            line.setName(a.getName());
+            line.setPrice(a.getPrice());
+            lines.add(line);
+        }
+        BigDecimal totalPrice = sumOrderLinePrices(lines);
 
         Order order = new Order(
                 null,
@@ -96,10 +105,15 @@ public class OrderServiceImpl implements OrderService {
                 seller,
                 client,
                 car,
-                accessories,
+                new ArrayList<>(),
+                false,
                 false,
                 false,
                 false);
+        for (OrderAccessory line : lines) {
+            line.setOrder(order);
+            order.getOrderAccessories().add(line);
+        }
         updateStatus(order);
 
         Order saved = orderRepository.save(order);
@@ -123,12 +137,18 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAR_NOT_FOUND, "Car not found: " + dto.getCarId()));
 
         List<Accessory> accessories = loadAccessoriesForCar(dto.getAccessoryIds(), car);
-        BigDecimal totalPrice = sumAccessoryPrices(accessories);
-
-        order.setTotalPrice(totalPrice);
+        order.getOrderAccessories().clear();
+        for (Accessory a : accessories) {
+            OrderAccessory line = new OrderAccessory();
+            line.setOrder(order);
+            line.setAccessory(a);
+            line.setName(a.getName());
+            line.setPrice(a.getPrice());
+            order.getOrderAccessories().add(line);
+        }
+        order.setTotalPrice(sumOrderLinePrices(order.getOrderAccessories()));
         order.setClientId(client);
         order.setCarId(car);
-        order.setAccessories(accessories);
         updateStatus(order);
 
         Order saved = orderRepository.save(order);
@@ -206,12 +226,6 @@ public class OrderServiceImpl implements OrderService {
 
         assertCanConfirmAccessories(order);
 
-        if (!order.isVehicleArrived()) {
-            throw new BusinessRuleException(
-                    ErrorCode.ORDER_CONFIRMATION_SEQUENCE,
-                    "Vehicle must be confirmed before accessories");
-        }
-
         order.setAccessoriesConfirmed(true);
         updateStatus(order);
         Order saved = orderRepository.save(order);
@@ -241,13 +255,37 @@ public class OrderServiceImpl implements OrderService {
         return toResponse(saved);
     }
 
+    @Override
+    public OrderResponseDTO confirmInspection(Long orderId) {
+        assertAuthenticated();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, "Order not found: " + orderId));
+
+        assertCanMutateOrder(order);
+
+        if (!order.isVehicleArrived() || !order.isAccessoriesConfirmed()) {
+            throw new BusinessRuleException(
+                    ErrorCode.ORDER_CONFIRMATION_SEQUENCE,
+                    "Vehicle and accessories must be confirmed before inspection");
+        }
+
+        order.setInspectionCompleted(true);
+        updateStatus(order);
+        Order saved = orderRepository.save(order);
+        log.info("Order inspection confirmed: id={}", orderId);
+        return toResponse(saved);
+    }
+
     private void updateStatus(Order order) {
         if (!order.isVehicleArrived()) {
             order.setStatus(OrderStatus.WAITING_VEHICLE);
         } else if (!order.isAccessoriesConfirmed()) {
             order.setStatus(OrderStatus.WAITING_ACCESSORIES);
+        } else if (!order.isInspectionCompleted()) {
+            order.setStatus(OrderStatus.WAITING_INSPECTION);
         } else if (!order.isInstallationCompleted()) {
-            order.setStatus(OrderStatus.WAITING_SCHEDULING);
+            order.setStatus(OrderStatus.WAITING_INSTALLATION);
         } else {
             order.setStatus(OrderStatus.READY_FOR_DELIVERY);
         }
@@ -276,10 +314,12 @@ public class OrderServiceImpl implements OrderService {
         return ordered;
     }
 
-    private static BigDecimal sumAccessoryPrices(List<Accessory> accessories) {
-        return accessories.stream()
-                .map(Accessory::getPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private static BigDecimal sumOrderLinePrices(Iterable<OrderAccessory> lines) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (OrderAccessory line : lines) {
+            sum = sum.add(line.getPrice());
+        }
+        return sum;
     }
 
     private static void assertAccessoryBelongsToCar(Accessory accessory, Car car) {
@@ -309,14 +349,13 @@ public class OrderServiceImpl implements OrderService {
                 order.getStatus(),
                 order.isVehicleArrived(),
                 order.isAccessoriesConfirmed(),
+                order.isInspectionCompleted(),
                 order.isInstallationCompleted(),
                 sellerId,
                 sellerDisplayName(seller),
                 toClientResponse(order.getClientId()),
                 toCarResponse(order.getCarId()),
-                order.getAccessories() == null
-                        ? List.of()
-                        : order.getAccessories().stream().map(this::toAccessoryResponse).toList(),
+                order.getOrderAccessories().stream().map(OrderAccessoryResponseDTO::from).toList(),
                 vehicleSummary);
     }
 
@@ -416,17 +455,6 @@ public class OrderServiceImpl implements OrderService {
 
     private CarResponseDTO toCarResponse(Car car) {
         return new CarResponseDTO(car.getId(), car.getBrand(), car.getModel(), car.getVersion());
-    }
-
-    private AccessoryResponseDTO toAccessoryResponse(Accessory accessory) {
-        Car car = accessory.getCar();
-        CarResponseDTO carDto = car == null ? null : toCarResponse(car);
-        return new AccessoryResponseDTO(
-                accessory.getId(),
-                accessory.getName(),
-                accessory.getDescription(),
-                accessory.getPrice(),
-                carDto);
     }
 
     private void assertAuthenticated() {
