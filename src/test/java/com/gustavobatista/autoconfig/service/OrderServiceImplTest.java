@@ -94,9 +94,10 @@ class OrderServiceImplTest {
                 o.getUserId(),
                 o.getClientId(),
                 o.getCarId(),
-                o.getAccessories(),
+                o.getOrderAccessories(),
                 o.isVehicleArrived(),
                 o.isAccessoriesConfirmed(),
+                o.isInspectionCompleted(),
                 o.isInstallationCompleted());
     }
 
@@ -219,6 +220,23 @@ class OrderServiceImplTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
             assertThrows(ResourceNotFoundException.class, () -> orderService.findOrderById(1L));
+        }
+    }
+
+    @Test
+    @DisplayName("confirmAccessories: permite confirmar antes do veículo e mantém status WAITING_VEHICLE")
+    void confirmAccessories_beforeVehicleArrived() {
+        Order base = TestFixtures.order(1L, seller, client, car);
+        try (MockedStatic<SecurityContextHolder> ctx = SecurityContextTestUtils.mockAuthenticatedUser(TestFixtures.ADMIN_EMAIL)) {
+            when(userRepository.findByEmail(TestFixtures.ADMIN_EMAIL)).thenReturn(Optional.of(seller));
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(base));
+            when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            OrderResponseDTO result = orderService.confirmAccessories(1L);
+
+            assertEquals(OrderStatus.WAITING_VEHICLE, result.getStatus());
+            assertEquals(true, result.isAccessoriesConfirmed());
+            assertEquals(false, result.isVehicleArrived());
         }
     }
 

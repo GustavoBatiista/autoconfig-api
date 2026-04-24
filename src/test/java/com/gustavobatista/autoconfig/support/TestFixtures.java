@@ -2,6 +2,7 @@ package com.gustavobatista.autoconfig.support;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import com.gustavobatista.autoconfig.entity.Car;
 import com.gustavobatista.autoconfig.entity.Client;
@@ -48,7 +49,8 @@ public final class TestFixtures {
                 seller,
                 client,
                 car,
-                java.util.List.of(),
+                new ArrayList<>(),
+                false,
                 false,
                 false,
                 false);
