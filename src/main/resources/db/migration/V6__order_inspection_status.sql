@@ -1,0 +1,5 @@
+ALTER TABLE orders ADD COLUMN inspection_completed BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE orders SET inspection_completed = TRUE WHERE status = 'READY_FOR_DELIVERY';
+
+UPDATE orders SET status = 'WAITING_INSPECTION' WHERE status = 'WAITING_SCHEDULING';
