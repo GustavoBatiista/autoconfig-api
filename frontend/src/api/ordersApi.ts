@@ -18,10 +18,9 @@ export type CarDto = {
 
 export type OrderAccessoryDto = {
   id: number
+  accessoryId: number
   name: string
-  description: string
   price: number
-  car: CarDto | null
 }
 
 export type VehicleEntrySummaryDto = {
@@ -40,6 +39,7 @@ export type OrderResponse = {
   status: string
   vehicleArrived: boolean
   accessoriesConfirmed: boolean
+  inspectionCompleted: boolean
   installationCompleted: boolean
   sellerId: number
   sellerName: string | null
@@ -130,6 +130,14 @@ export async function confirmOrderAccessories(orderId: number): Promise<OrderRes
   const res = await apiFetch(`/orders/${orderId}/confirm-accessories`, { method: 'PATCH' })
   if (!res.ok) {
     throw new Error(await readApiErrorMessage(res, `Falha ao confirmar acessorios (${res.status})`))
+  }
+  return (await res.json()) as OrderResponse
+}
+
+export async function confirmOrderInspection(orderId: number): Promise<OrderResponse> {
+  const res = await apiFetch(`/orders/${orderId}/confirm-inspection`, { method: 'PATCH' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao confirmar inspecao (${res.status})`))
   }
   return (await res.json()) as OrderResponse
 }

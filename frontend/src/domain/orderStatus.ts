@@ -1,7 +1,7 @@
 export type StatusBucket = 'pending' | 'processing' | 'done'
 
 const PENDING = new Set(['WAITING_VEHICLE'])
-const PROCESSING = new Set(['WAITING_ACCESSORIES', 'WAITING_SCHEDULING'])
+const PROCESSING = new Set(['WAITING_ACCESSORIES', 'WAITING_INSPECTION', 'WAITING_INSTALLATION'])
 const DONE = new Set(['READY_FOR_DELIVERY'])
 
 export function orderStatusBucket(status: string): StatusBucket {
@@ -17,8 +17,10 @@ export function orderStatusLabelPt(status: string): string {
       return 'Aguardando veículo'
     case 'WAITING_ACCESSORIES':
       return 'Aguardando acessório'
-    case 'WAITING_SCHEDULING':
-      return 'Aguardando agendamento'
+    case 'WAITING_INSPECTION':
+      return 'Aguardando inspeção'
+    case 'WAITING_INSTALLATION':
+      return 'Aguardando instalação'
     case 'READY_FOR_DELIVERY':
       return 'Pronto para entrega'
     default:
@@ -32,8 +34,10 @@ export function orderStatusShortLabelPt(status: string): string {
       return 'Aguardando veículo'
     case 'WAITING_ACCESSORIES':
       return 'Aguardando acessórios'
-    case 'WAITING_SCHEDULING':
-      return 'Aguardando agendamento'
+    case 'WAITING_INSPECTION':
+      return 'Aguardando inspeção'
+    case 'WAITING_INSTALLATION':
+      return 'Aguardando instalação'
     case 'READY_FOR_DELIVERY':
       return 'Pronto p/ entrega'
     default:
