@@ -16,19 +16,21 @@ public class OrderResponseDTO {
     private final OrderStatus status;
     private final boolean vehicleArrived;
     private final boolean accessoriesConfirmed;
+    private final boolean inspectionCompleted;
     private final boolean installationCompleted;
     private final Long sellerId;
     private final String sellerName;
     private final ClientResponseDTO client;
     private final CarResponseDTO car;
-    private final List<AccessoryResponseDTO> accessories;
+    private final List<OrderAccessoryResponseDTO> accessories;
     private final VehicleEntrySummaryDTO vehicleEntry;
 
     public OrderResponseDTO(Long id, LocalDateTime orderDate, LocalDateTime createdAt, LocalDateTime updatedAt,
             BigDecimal totalPrice,
-            OrderStatus status, boolean vehicleArrived, boolean accessoriesConfirmed, boolean installationCompleted,
+            OrderStatus status, boolean vehicleArrived, boolean accessoriesConfirmed, boolean inspectionCompleted,
+            boolean installationCompleted,
             Long sellerId, String sellerName, ClientResponseDTO client, CarResponseDTO car,
-            List<AccessoryResponseDTO> accessories,
+            List<OrderAccessoryResponseDTO> accessories,
             VehicleEntrySummaryDTO vehicleEntry) {
         this.id = id;
         this.orderDate = orderDate;
@@ -38,6 +40,7 @@ public class OrderResponseDTO {
         this.status = status;
         this.vehicleArrived = vehicleArrived;
         this.accessoriesConfirmed = accessoriesConfirmed;
+        this.inspectionCompleted = inspectionCompleted;
         this.installationCompleted = installationCompleted;
         this.sellerId = sellerId;
         this.sellerName = sellerName;
@@ -79,6 +82,10 @@ public class OrderResponseDTO {
         return accessoriesConfirmed;
     }
 
+    public boolean isInspectionCompleted() {
+        return inspectionCompleted;
+    }
+
     public boolean isInstallationCompleted() {
         return installationCompleted;
     }
@@ -99,7 +106,7 @@ public class OrderResponseDTO {
         return car;
     }
 
-    public List<AccessoryResponseDTO> getAccessories() {
+    public List<OrderAccessoryResponseDTO> getAccessories() {
         return accessories;
     }
 

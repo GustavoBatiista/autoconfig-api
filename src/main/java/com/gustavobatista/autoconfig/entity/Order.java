@@ -2,9 +2,12 @@ package com.gustavobatista.autoconfig.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.gustavobatista.autoconfig.enums.OrderStatus;
+
+import org.hibernate.annotations.BatchSize;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,10 +16,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -39,6 +42,8 @@ public class Order extends Auditable {
     private boolean vehicleArrived;
     @Column(name = "accessories_confirmed", nullable = false)
     private boolean accessoriesConfirmed;
+    @Column(name = "inspection_completed", nullable = false)
+    private boolean inspectionCompleted;
     @Column(name = "installation_completed", nullable = false)
     private boolean installationCompleted;
     @ManyToOne
@@ -50,28 +55,28 @@ public class Order extends Auditable {
     @ManyToOne
     @JoinColumn(name = "car_id", nullable = false)
     private Car carId;
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "order_accessory", joinColumns = @JoinColumn(name = "order_id"), inverseJoinColumns = @JoinColumn(name = "accessory_id"))
-    private List<Accessory> accessories;
+    @BatchSize(size = 32)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<OrderAccessory> orderAccessories = new ArrayList<>();
 
-    
     public Order() {
     }
 
     public Order(Long id, LocalDateTime orderDate, BigDecimal totalPrice, OrderStatus status, User userId, Client clientId,
-            Car carId, List<Accessory> accessories, boolean vehicleArrived, boolean accessoriesConfirmed,
-            boolean installationCompleted) {
+            Car carId, List<OrderAccessory> orderAccessories, boolean vehicleArrived, boolean accessoriesConfirmed,
+            boolean inspectionCompleted, boolean installationCompleted) {
         this.id = id;
         this.orderDate = orderDate;
         this.totalPrice = totalPrice;
         this.status = status;
         this.vehicleArrived = vehicleArrived;
         this.accessoriesConfirmed = accessoriesConfirmed;
+        this.inspectionCompleted = inspectionCompleted;
         this.installationCompleted = installationCompleted;
         this.userId = userId;
         this.clientId = clientId;
         this.carId = carId;
-        this.accessories = accessories;
+        this.orderAccessories = orderAccessories != null ? new ArrayList<>(orderAccessories) : new ArrayList<>();
     }
 
     public Long getId() {
@@ -126,6 +131,14 @@ public class Order extends Auditable {
         this.accessoriesConfirmed = accessoriesConfirmed;
     }
 
+    public boolean isInspectionCompleted() {
+        return inspectionCompleted;
+    }
+
+    public void setInspectionCompleted(boolean inspectionCompleted) {
+        this.inspectionCompleted = inspectionCompleted;
+    }
+
     public boolean isInstallationCompleted() {
         return installationCompleted;
     }
@@ -150,12 +163,15 @@ public class Order extends Auditable {
         this.carId = carId;
     }
 
-    public List<Accessory> getAccessories() {
-        return accessories;
+    public List<OrderAccessory> getOrderAccessories() {
+        return orderAccessories;
     }
 
-    public void setAccessories(List<Accessory> accessories) {
-        this.accessories = accessories;
+    public void setOrderAccessories(List<OrderAccessory> orderAccessories) {
+        this.orderAccessories.clear();
+        if (orderAccessories != null) {
+            this.orderAccessories.addAll(orderAccessories);
+        }
     }
 
     @Override
@@ -186,8 +202,8 @@ public class Order extends Auditable {
     @Override
     public String toString() {
         return "Order [id=" + id + ", orderDate=" + orderDate + ", totalPrice=" + totalPrice + ", status=" + status
-                + ", userId=" + userId + ", clientId=" + clientId + ", carId=" + carId + ",accessories=" + accessories
-                + "]";
+                + ", userId=" + userId + ", clientId=" + clientId + ", carId=" + carId + ",orderAccessories="
+                + orderAccessories + "]";
     }
 
 }
