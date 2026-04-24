@@ -75,7 +75,7 @@ export function OrderEditPage() {
       setClientId(o.client.id)
       setCarId(o.car.id)
       setLoadedStatus(o.status)
-      setSelectedAccessoryIds(new Set(o.accessories.map((a) => a.id)))
+      setSelectedAccessoryIds(new Set(o.accessories.map((a) => a.accessoryId)))
     } catch (err) {
       setLoadedId(null)
       setLoadedStatus(null)

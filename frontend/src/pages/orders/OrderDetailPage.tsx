@@ -1,8 +1,31 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchMe, type MeResponse } from '../../api/authApi'
-import { confirmOrderAccessories, deleteOrder, fetchOrderById, type OrderResponse } from '../../api/ordersApi'
-import { canConfirmAccessoriesInUi, canConfirmVehicleInUi, canMutateOrderInUi } from '../../domain/orderPermissions'
+import {
+  confirmOrderAccessories,
+  confirmOrderInspection,
+  confirmOrderInstallation,
+  deleteOrder,
+  fetchOrderById,
+  type OrderResponse,
+} from '../../api/ordersApi'
+import {
+  accessoriesWorkflowDisabled,
+  accessoriesWorkflowTitle,
+  canMutateOrderInUi,
+  canShowOrderWorkflowArea,
+  inspectionWorkflowDisabled,
+  inspectionWorkflowTitle,
+  installationWorkflowDisabled,
+  installationWorkflowTitle,
+  showAccessoriesWorkflowButton,
+  showInstallationWorkflowButton,
+  showInspectionWorkflowButton,
+  showVehicleWorkflowButton,
+  showsFourStepOrderToolbar,
+  vehicleWorkflowDisabled,
+  vehicleWorkflowTitle,
+} from '../../domain/orderPermissions'
 import { orderStatusLabelPt } from '../../domain/orderStatus'
 import { vehicleConditionLabelPt } from '../../domain/vehicleCondition'
 import { parseEntityId } from '../../utils/parseEntityId'
@@ -48,6 +71,8 @@ export function OrderDetailPage() {
   const [loadingOrder, setLoadingOrder] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmingAccessories, setConfirmingAccessories] = useState(false)
+  const [confirmingInspection, setConfirmingInspection] = useState(false)
+  const [confirmingInstallation, setConfirmingInstallation] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -95,8 +120,12 @@ export function OrderDetailPage() {
 
   const ve = order?.vehicleEntry
 
+  const actionBusy =
+    deleting || confirmingAccessories || confirmingInspection || confirmingInstallation
+
   async function onConfirmAccessories() {
-    if (order == null || confirmingAccessories || !order.vehicleArrived) return
+    if (order == null || me == null || confirmingAccessories || accessoriesWorkflowDisabled(me, order, actionBusy))
+      return
     setError(null)
     setConfirmingAccessories(true)
     try {
@@ -106,6 +135,36 @@ export function OrderDetailPage() {
       setError(err instanceof Error ? err.message : 'Erro ao confirmar acessorios')
     } finally {
       setConfirmingAccessories(false)
+    }
+  }
+
+  async function onConfirmInspection() {
+    if (order == null || me == null || confirmingInspection || inspectionWorkflowDisabled(me, order, actionBusy))
+      return
+    setError(null)
+    setConfirmingInspection(true)
+    try {
+      const updated = await confirmOrderInspection(order.id)
+      setOrder(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar inspecao')
+    } finally {
+      setConfirmingInspection(false)
+    }
+  }
+
+  async function onConfirmInstallation() {
+    if (order == null || me == null || confirmingInstallation || installationWorkflowDisabled(me, order, actionBusy))
+      return
+    setError(null)
+    setConfirmingInstallation(true)
+    try {
+      const updated = await confirmOrderInstallation(order.id)
+      setOrder(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao confirmar instalacao')
+    } finally {
+      setConfirmingInstallation(false)
     }
   }
 
@@ -126,58 +185,138 @@ export function OrderDetailPage() {
 
   return (
     <div>
-      <h2 className="dash-page__heading">Detalhe do pedido</h2>
+      {order != null ? (
+        <header className="dash-list-header">
+          <h2 className="dash-page__heading dash-list-header__title">Detalhe do pedido</h2>
+          {me && canMutateOrderInUi(me, order) ? (
+            <div className="dash-list-header__actions">
+              <button
+                type="button"
+                className="dash-btn-secondary"
+                onClick={() => navigate({ pathname: '../edit', search: `?id=${order.id}` }, { relative: 'path' })}
+                disabled={actionBusy}
+              >
+                Alterar
+              </button>
+              <button
+                type="button"
+                className="dash-btn-danger"
+                onClick={onDeleteOrder}
+                disabled={actionBusy}
+              >
+                {deleting ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+          ) : null}
+        </header>
+      ) : (
+        <h2 className="dash-page__heading">Detalhe do pedido</h2>
+      )}
 
       {loadingOrder ? <p className="dash-muted">Carregando...</p> : null}
       {error ? <p className="dash-error">{error}</p> : null}
 
       {order != null ? (
         <div className="dash-user-form">
-          {me &&
-          (canConfirmVehicleInUi(me, order) ||
-            canConfirmAccessoriesInUi(me, order) ||
-            canMutateOrderInUi(me, order)) ? (
-            <div className="dash-form-actions">
-              {canConfirmVehicleInUi(me, order) ? (
-                <button
-                  type="button"
-                  className="dash-btn-secondary"
-                  onClick={() => navigate({ pathname: '../vehicle-data', search: `?id=${order.id}` }, { relative: 'path' })}
-                  disabled={deleting || confirmingAccessories}
-                >
-                  Incluir dados
-                </button>
-              ) : null}
-              {canConfirmAccessoriesInUi(me, order) ? (
-                <button
-                  type="button"
-                  className="dash-btn-secondary"
-                  onClick={onConfirmAccessories}
-                  disabled={!order.vehicleArrived || deleting || confirmingAccessories}
-                >
-                  {confirmingAccessories ? 'Confirmando...' : 'Confirmar acessórios'}
-                </button>
-              ) : null}
-              {canMutateOrderInUi(me, order) ? (
+          {me != null && canShowOrderWorkflowArea(me, order) ? (
+            <div
+              className={
+                showsFourStepOrderToolbar(me, order)
+                  ? 'dash-form-actions dash-order-detail__workflow dash-order-detail__workflow--four'
+                  : 'dash-form-actions dash-order-detail__workflow'
+              }
+            >
+              {showsFourStepOrderToolbar(me, order) ? (
                 <>
                   <button
                     type="button"
                     className="dash-btn-secondary"
-                    onClick={() => navigate({ pathname: '../edit', search: `?id=${order.id}` }, { relative: 'path' })}
-                    disabled={deleting || confirmingAccessories}
+                    onClick={() =>
+                      navigate({ pathname: '../vehicle-data', search: `?id=${order.id}` }, { relative: 'path' })
+                    }
+                    disabled={vehicleWorkflowDisabled(me, order, actionBusy)}
+                    title={vehicleWorkflowTitle(me, order, actionBusy)}
                   >
-                    Alterar
+                    Dados do veículo
                   </button>
                   <button
                     type="button"
-                    className="dash-btn-danger"
-                    onClick={onDeleteOrder}
-                    disabled={deleting || confirmingAccessories}
+                    className="dash-btn-secondary"
+                    onClick={onConfirmAccessories}
+                    disabled={accessoriesWorkflowDisabled(me, order, actionBusy)}
+                    title={accessoriesWorkflowTitle(me, order, actionBusy)}
                   >
-                    {deleting ? 'Excluindo...' : 'Excluir'}
+                    {confirmingAccessories ? 'Confirmando...' : 'Confirmar acessórios'}
+                  </button>
+                  <button
+                    type="button"
+                    className="dash-btn-secondary"
+                    onClick={onConfirmInspection}
+                    disabled={inspectionWorkflowDisabled(me, order, actionBusy)}
+                    title={inspectionWorkflowTitle(me, order, actionBusy)}
+                  >
+                    {confirmingInspection ? 'Confirmando...' : 'Confirmar inspeção'}
+                  </button>
+                  <button
+                    type="button"
+                    className="dash-btn-secondary"
+                    onClick={onConfirmInstallation}
+                    disabled={installationWorkflowDisabled(me, order, actionBusy)}
+                    title={installationWorkflowTitle(me, order, actionBusy)}
+                  >
+                    {confirmingInstallation ? 'Confirmando...' : 'Confirmar instalação'}
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  {showVehicleWorkflowButton(me, order) ? (
+                    <button
+                      type="button"
+                      className="dash-btn-secondary"
+                      onClick={() =>
+                        navigate({ pathname: '../vehicle-data', search: `?id=${order.id}` }, { relative: 'path' })
+                      }
+                      disabled={vehicleWorkflowDisabled(me, order, actionBusy)}
+                      title={vehicleWorkflowTitle(me, order, actionBusy)}
+                    >
+                      Dados do veículo
+                    </button>
+                  ) : null}
+                  {showAccessoriesWorkflowButton(me, order) ? (
+                    <button
+                      type="button"
+                      className="dash-btn-secondary"
+                      onClick={onConfirmAccessories}
+                      disabled={accessoriesWorkflowDisabled(me, order, actionBusy)}
+                      title={accessoriesWorkflowTitle(me, order, actionBusy)}
+                    >
+                      {confirmingAccessories ? 'Confirmando...' : 'Confirmar acessórios'}
+                    </button>
+                  ) : null}
+                  {showInspectionWorkflowButton(me, order) ? (
+                    <button
+                      type="button"
+                      className="dash-btn-secondary"
+                      onClick={onConfirmInspection}
+                      disabled={inspectionWorkflowDisabled(me, order, actionBusy)}
+                      title={inspectionWorkflowTitle(me, order, actionBusy)}
+                    >
+                      {confirmingInspection ? 'Confirmando...' : 'Confirmar inspeção'}
+                    </button>
+                  ) : null}
+                  {showInstallationWorkflowButton(me, order) ? (
+                    <button
+                      type="button"
+                      className="dash-btn-secondary"
+                      onClick={onConfirmInstallation}
+                      disabled={installationWorkflowDisabled(me, order, actionBusy)}
+                      title={installationWorkflowTitle(me, order, actionBusy)}
+                    >
+                      {confirmingInstallation ? 'Confirmando...' : 'Confirmar instalação'}
+                    </button>
+                  ) : null}
+                </>
+              )}
             </div>
           ) : null}
           <div className="dash-user-form__grid">
@@ -228,6 +367,15 @@ export function OrderDetailPage() {
               />
             </label>
             <label>
+              Inspeção concluída
+              <input
+                type="text"
+                readOnly
+                className="dash-input-readonly"
+                value={order.inspectionCompleted ? 'Sim' : 'Nao'}
+              />
+            </label>
+            <label>
               Instalação concluída
               <input
                 type="text"
@@ -247,7 +395,7 @@ export function OrderDetailPage() {
                 {order.accessories.map((a) => (
                   <li key={a.id} className="dash-accessory-item">
                     <div className="dash-accessory-item__main">
-                      <span className="dash-accessory-item__id">#{a.id}</span>
+                      <span className="dash-accessory-item__id">#{a.accessoryId}</span>
                       <span className="dash-accessory-item__name">{a.name}</span>
                     </div>
                     <span className="dash-accessory-item__price">{moneyBr.format(a.price)}</span>
