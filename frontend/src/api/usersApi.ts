@@ -1,4 +1,5 @@
 import { apiFetch } from './apiClient'
+import { readApiErrorMessage } from './readApiError'
 import type { SpringPage } from './springPage'
 
 export type UserResponse = {
@@ -34,18 +35,22 @@ export async function createUser(payload: CreateUserPayload): Promise<UserRespon
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
-    let detail = res.statusText
-    try {
-      const body: unknown = await res.json()
-      if (body && typeof body === 'object') {
-        const o = body as Record<string, unknown>
-        if (typeof o.detail === 'string') detail = o.detail
-        else if (typeof o.message === 'string') detail = o.message
-      }
-    } catch {
-      /* ignore */
-    }
-    throw new Error(detail || `Failed to create user (${res.status})`)
+    throw new Error(await readApiErrorMessage(res, `Falha ao criar usuário (${res.status})`))
   }
   return (await res.json()) as UserResponse
+}
+
+export async function fetchUserById(id: number): Promise<UserResponse> {
+  const res = await apiFetch(`/users/${id}`)
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao carregar usuário (${res.status})`))
+  }
+  return (await res.json()) as UserResponse
+}
+
+export async function deleteUser(id: number): Promise<void> {
+  const res = await apiFetch(`/users/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(await readApiErrorMessage(res, `Falha ao excluir usuário (${res.status})`))
+  }
 }

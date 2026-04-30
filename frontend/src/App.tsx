@@ -14,6 +14,8 @@ import { CarsPage } from './pages/cars/CarsPage'
 import { ClientsPage } from './pages/clients/ClientsPage'
 import { AccessoriesPage } from './pages/accessories/AccessoriesPage'
 import { UsersPage } from './pages/users/UsersPage'
+import { UserCreatePage } from './pages/users/UserCreatePage'
+import { UserDeletePage } from './pages/users/UserDeletePage'
 import { ClientCreatePage } from './pages/clients/ClientCreatePage'
 import { ClientEditPage } from './pages/clients/ClientEditPage'
 import { ClientDeletePage } from './pages/clients/ClientDeletePage'
@@ -71,6 +73,8 @@ export default function App() {
           <Route path="accessories/edit" element={<AccessoryEditPage />} />
           <Route path="accessories/delete" element={<AccessoryDeletePage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="users/new" element={<UserCreatePage />} />
+          <Route path="users/delete" element={<UserDeletePage />} />
         </Route>
         <Route path="home" element={<HomePage />} />
       </Route>
